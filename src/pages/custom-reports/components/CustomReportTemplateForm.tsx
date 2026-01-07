@@ -130,6 +130,7 @@ export const CustomReportTemplateForm: React.FC<{ forcePreview?: boolean }> = ({
         setReportGlobalFilters(newFilters);
     };
 
+
     useEffect(() => {
         const startDateFormVal = form.getFieldValue('startDate');
         const endDateFormVal = form.getFieldValue('endDate');
@@ -180,9 +181,7 @@ export const CustomReportTemplateForm: React.FC<{ forcePreview?: boolean }> = ({
             const startDate = dayjs().subtract(1, 'month').startOf('month');
             setReportGlobalFilters({
                 startDate: data.startDate ? dayjs(data.startDate).toISOString() : startDate.toISOString(),
-                endDate: data.startDate ?
-                    data.endDate ? dayjs(data.endDate).toISOString() : undefined
-                    : startDate.endOf('month').toISOString(),
+                endDate: data.startDate ? dayjs(data.endDate).toISOString() : startDate.endOf('month').toISOString(),
                 communityIds: data.communityIds,
             })
 

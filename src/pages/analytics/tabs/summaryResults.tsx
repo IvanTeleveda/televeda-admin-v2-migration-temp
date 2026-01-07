@@ -1,4 +1,4 @@
-import { Col, Row, Space, Typography, Alert } from "@pankod/refine-antd";
+import { Col, Row, Space, Spin, Typography, Alert } from "@pankod/refine-antd";
 import { useMemo, useContext } from "react";
 import { ColorModeContext } from "../../../contexts/color-mode";
 import "../../../components/analytics/stat-tiles/styles.css";
@@ -13,47 +13,48 @@ import {
     ChurnedUsersTile
 } from "../../../components/analytics";
 
+// Import analytics data hook
+import { useAnalyticsData } from "../../../hooks/useAnalyticsData";
 import { usePermissions } from "@refinedev/core";
 import { UserPermissions } from "../../../interfaces";
 
 const { Text } = Typography;
 
+interface SummaryResult {
+    attendance: number;
+    engagementMinutes: number;
+    events: number;
+    registrations: number;
+    totalTimeAcrossCommunities: number;
+    totalActiveMembers: number;
+    overallAveragePerMember: number;
+}
+
 interface SummaryContainerProps {
     dateRange: any;
+    summaryData: SummaryResult | undefined;
+    isLoading: boolean;
     communityIds?: any;
     apiUrl: string;
-    analyticsData: any;
-    calculatedMetrics: any;
-    resourceEngagementMetrics: any;
-    loadingStates: {
-        engagedAdoptedUsers: boolean;
-        repeatVsNew: boolean;
-        engagementHours: boolean;
-        resourceEngagement: boolean;
-        disengagedUsers: boolean;
-        churnedUsers: boolean;
-    };
-    hasErrors: boolean;
-    errors: any;
 }
 
 export const SummaryContainer: React.FC<SummaryContainerProps> = ({
     dateRange,
+    summaryData,
+    isLoading,
     communityIds,
-    apiUrl,
-    analyticsData,
-    calculatedMetrics,
-    resourceEngagementMetrics,
-    loadingStates,
-    hasErrors,
-    errors
+    apiUrl
 }) => {
     const { mode } = useContext(ColorModeContext);
 
     const { data: permissionsData } = usePermissions<UserPermissions>();
 
-    // Get engagement hours from the analytics data
-    const engagementHours = analyticsData?.engagementHours;
+    // Use the analytics data hook for new metrics
+    const { data: analyticsData, calculatedMetrics, resourceEngagementMetrics, isLoading: analyticsLoading, hasErrors, errors } = useAnalyticsData({
+        communityIds,
+        dateRange,
+        apiUrl
+    });
 
     const formattedDateRange = useMemo(() => {
         if (!dateRange || !dateRange[0] || !dateRange[1]) return "";
@@ -61,18 +62,23 @@ export const SummaryContainer: React.FC<SummaryContainerProps> = ({
     }, [dateRange]);
 
 
-    // Check if engagement hours data is zero or empty
+    // Check if all summary data is zero or empty
     const hasNoData = useMemo(() => {
-        if (!engagementHours) return false;
+        if (!summaryData) return false;
         return (
-            (engagementHours.totalHours || 0) === 0 &&
-            (engagementHours.streamingHours || 0) === 0 &&
-            (engagementHours.onSiteHours || 0) === 0
+            summaryData.registrations === 0 &&
+            summaryData.attendance === 0 &&
+            summaryData.engagementMinutes === 0 &&
+            summaryData.events === 0 &&
+            summaryData.totalTimeAcrossCommunities === 0 &&
+            summaryData.totalActiveMembers === 0 &&
+            summaryData.overallAveragePerMember === 0
         );
-    }, [engagementHours]);
+    }, [summaryData]);
 
     return (
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Spin spinning={isLoading} tip="Loading summary data...">
+            <Space direction="vertical" style={{ width: '100%' }}>
                 {/* Date Range Display */}
                 <div style={{ textAlign: 'center', marginBottom: 16 }}>
                     <Text strong style={{ fontSize: 16 }}>
@@ -91,7 +97,7 @@ export const SummaryContainer: React.FC<SummaryContainerProps> = ({
                 </div>
 
                 {/* Show "No data found" message when all values are zero */}
-                {/* {!isLoading && hasNoData && (
+                {!isLoading && hasNoData && (
                     <div style={{
                         textAlign: 'center',
                         padding: '60px 20px',
@@ -107,7 +113,7 @@ export const SummaryContainer: React.FC<SummaryContainerProps> = ({
                             Please adjust your search and try again.
                         </div>
                     </div>
-                )} */}
+                )}
 
                 {/* Show analytics errors if any */}
                 {hasErrors && (
@@ -129,17 +135,17 @@ export const SummaryContainer: React.FC<SummaryContainerProps> = ({
                                 apiUrl={apiUrl}
                                 engagedData={calculatedMetrics?.engagedUsers}
                                 adoptedData={calculatedMetrics?.adoptedUsers}
-                                isLoading={loadingStates.engagedAdoptedUsers}
+                                isLoading={analyticsLoading}
                                 error={errors.engagedAdoptedUsers}
                             />
                         </Col>
 
                         <Col xs={24} sm={12} md={8} style={{ display: 'flex' }}>
                             <EngagementHoursTile
-                                totalHours={engagementHours?.totalHours || 0}
-                                streamingHours={engagementHours?.streamingHours || 0}
-                                onSiteHours={engagementHours?.onSiteHours || 0}
-                                isLoading={loadingStates.engagementHours}
+                                totalHours={(summaryData?.engagementMinutes || 0) / 60}
+                                streamingHours={(summaryData?.engagementMinutes || 0) / 60}
+                                onSiteHours={(summaryData?.engagementMinutes || 0) / 60}
+                                isLoading={isLoading}
                             />
                         </Col>
 
@@ -149,7 +155,7 @@ export const SummaryContainer: React.FC<SummaryContainerProps> = ({
                                 dateRange={dateRange}
                                 apiUrl={apiUrl}
                                 data={calculatedMetrics?.repeatVsNew}
-                                isLoading={loadingStates.repeatVsNew}
+                                isLoading={analyticsLoading}
                                 error={errors.repeatVsNew}
                             />
                         </Col>
@@ -160,26 +166,33 @@ export const SummaryContainer: React.FC<SummaryContainerProps> = ({
 
                             <Col xs={24} sm={12} md={8} style={{ display: 'flex' }}>
                                 <ResourceEngagementTile
+                                    communityIds={communityIds}
+                                    dateRange={dateRange}
+                                    apiUrl={apiUrl}
                                     data={resourceEngagementMetrics}
-                                    isLoading={loadingStates.resourceEngagement}
+                                    isLoading={analyticsLoading}
                                     error={errors.resourceEngagement}
                                 />
                             </Col>
 
                             <Col xs={24} sm={12} md={8} style={{ display: 'flex', }}>
                                 <DisengagedUsersTile
+                                    communityIds={communityIds}
+                                    dateRange={dateRange}
+                                    apiUrl={apiUrl}
                                     data={calculatedMetrics?.disengagedUsers}
-                                    total={calculatedMetrics?.disengagedUsers?.totalDisengaged}
-                                    isLoading={loadingStates.disengagedUsers}
+                                    isLoading={analyticsLoading}
                                     error={errors.disengagedUsers}
                                 />
                             </Col>
 
                             <Col xs={24} sm={12} md={8} style={{ display: 'flex' }}>
                                 <ChurnedUsersTile
+                                    communityIds={communityIds}
+                                    dateRange={dateRange}
+                                    apiUrl={apiUrl}
                                     data={calculatedMetrics?.churnedUsers}
-                                    total={calculatedMetrics?.churnedUsers?.totalChurned}
-                                    isLoading={loadingStates.churnedUsers}
+                                    isLoading={analyticsLoading}
                                     error={errors.churnedUsers}
                                 />
                             </Col>
@@ -187,5 +200,6 @@ export const SummaryContainer: React.FC<SummaryContainerProps> = ({
                     }
                 </div>
             </Space>
+        </Spin>
     );
 };

@@ -20,20 +20,19 @@ interface RepeatVsNewData {
 }
 
 interface ResourceEngagementData {
-    data: {
-        itemId: string;
-        collectionId: string;
-        communityId: string;
-        resource_name: string;
-        category_name: string;
-        community_name: string;
-        modal_views: string;
-        downloads: string;
-        opens: string;
-        page_views: string;
-        unique_users: string;
-    },
-    pageViews: number; 
+    itemId: string;
+    collectionId: string;
+    communityId: string;
+    resource_name: string;
+    category_name: string;
+    community_name: string;
+    modal_views: string;
+    downloads: string;
+    opens: string;
+    page_views: string;
+    unique_users: string;
+    first_engagement: string;
+    last_engagement: string;
 }
 
 interface DisengagedUsersData {
@@ -49,19 +48,12 @@ interface ChurnedUsersData {
     count: string;
 }
 
-interface EngagementHoursData {
-    totalHours: number;
-    streamingHours: number;
-    onSiteHours: number;
-}
-
 interface AnalyticsData {
     engagedAdoptedUsers: EngagedAdoptedUsersData | null;
     repeatVsNew: RepeatVsNewData | null;
     resourceEngagement: ResourceEngagementData | null;
     disengagedUsers: DisengagedUsersData | null;
     churnedUsers: ChurnedUsersData | null;
-    engagementHours: EngagementHoursData | null;
 }
 
 interface UseAnalyticsDataProps {
@@ -74,10 +66,10 @@ export const useAnalyticsData = ({ communityIds, dateRange, apiUrl }: UseAnalyti
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     const { data: permissionsData } = usePermissions<UserPermissions>();
-
+    
     const query = useMemo(() => {
         if (!dateRange?.[0] || !dateRange?.[1] || !communityIds) return null;
-
+        
         return {
             start: dateRange[0].startOf('day').toISOString(),
             end: dateRange[1].endOf('day').toISOString(),
@@ -87,117 +79,94 @@ export const useAnalyticsData = ({ communityIds, dateRange, apiUrl }: UseAnalyti
     }, [dateRange, communityIds, timezone]);
 
     // Fetch Engaged & Adopted Users data
-    const {
-        data: engagedAdoptedUsersData,
-        isLoading: engagedAdoptedUsersLoading,
-        error: engagedAdoptedUsersError
+    const { 
+        data: engagedAdoptedUsersData, 
+        isLoading: engagedAdoptedUsersLoading, 
+        error: engagedAdoptedUsersError 
     } = useCustom<EngagedAdoptedUsersData>({
         url: `${apiUrl}/report_classes/analytics/stats/engaged-adopted-users`,
         method: 'get',
         config: { query },
         queryOptions: {
             enabled: !!query,
-            refetchOnWindowFocus: false,
-            keepPreviousData: false
+            refetchOnWindowFocus: false
         }
     });
 
     // Fetch Repeat vs New data
-    const {
-        data: repeatVsNewData,
-        isLoading: repeatVsNewLoading,
-        error: repeatVsNewError
+    const { 
+        data: repeatVsNewData, 
+        isLoading: repeatVsNewLoading, 
+        error: repeatVsNewError 
     } = useCustom<RepeatVsNewData>({
         url: `${apiUrl}/report_classes/analytics/stats/repeat-vs-new-attendees`,
         method: 'get',
         config: { query },
         queryOptions: {
             enabled: !!query,
-            refetchOnWindowFocus: false,
-            keepPreviousData: false
+            refetchOnWindowFocus: false
         }
     });
 
     // Fetch Resource Engagement data
-    const {
-        data: resourceEngagementData,
-        isLoading: resourceEngagementLoading,
-        error: resourceEngagementError
+    const { 
+        data: resourceEngagementData, 
+        isLoading: resourceEngagementLoading, 
+        error: resourceEngagementError 
     } = useCustom<ResourceEngagementData>({
-        url: `${apiUrl}/report_classes/analytics/stats/resource-engagement`,
+        url: `${apiUrl}/report_classes/analytics/resource-engagement`,
         method: 'get',
         config: { query },
         queryOptions: {
             enabled: !!query && permissionsData && permissionsData === 'TelevedaAdmin',
-            refetchOnWindowFocus: false,
-            keepPreviousData: false
+            refetchOnWindowFocus: false
         }
     });
 
     // Fetch Disengaged Users data
-    const {
-        data: disengagedUsersData,
-        isLoading: disengagedUsersLoading,
-        error: disengagedUsersError
+    const { 
+        data: disengagedUsersData, 
+        isLoading: disengagedUsersLoading, 
+        error: disengagedUsersError 
     } = useCustom<DisengagedUsersData>({
         url: `${apiUrl}/report_classes/analytics/stats/disengaged-users`,
         method: 'get',
         config: { query },
         queryOptions: {
             enabled: !!query && permissionsData && permissionsData === 'TelevedaAdmin',
-            refetchOnWindowFocus: false,
-            keepPreviousData: false
+            refetchOnWindowFocus: false
         }
     });
 
     // Fetch Churned Users data
-    const {
-        data: churnedUsersData,
-        isLoading: churnedUsersLoading,
-        error: churnedUsersError
+    const { 
+        data: churnedUsersData, 
+        isLoading: churnedUsersLoading, 
+        error: churnedUsersError 
     } = useCustom<ChurnedUsersData>({
         url: `${apiUrl}/report_classes/analytics/stats/churned-users`,
         method: 'get',
         config: { query },
         queryOptions: {
             enabled: !!query && permissionsData && permissionsData === 'TelevedaAdmin',
-            refetchOnWindowFocus: false,
-            keepPreviousData: false
-        }
-    });
-
-    // Fetch Engagement Hours data
-    const {
-        data: engagementHoursData,
-        isLoading: engagementHoursLoading,
-        error: engagementHoursError
-    } = useCustom<EngagementHoursData>({
-        url: `${apiUrl}/report_classes/analytics/stats/engagement-hours`,
-        method: 'get',
-        config: { query },
-        queryOptions: {
-            enabled: !!query,
-            refetchOnWindowFocus: false,
-            keepPreviousData: false
+            refetchOnWindowFocus: false
         }
     });
 
     // Combined loading state - only consider queries that are actually enabled
     const isLoading = useMemo(() => {
         const isAdmin = permissionsData === 'TelevedaAdmin';
-
-        return engagedAdoptedUsersLoading ||
-            repeatVsNewLoading ||
-            engagementHoursLoading ||
-            (isAdmin && resourceEngagementLoading) ||
-            (isAdmin && disengagedUsersLoading) ||
-            (isAdmin && churnedUsersLoading);
+        
+        return engagedAdoptedUsersLoading || 
+               repeatVsNewLoading || 
+               (isAdmin && resourceEngagementLoading) || 
+               (isAdmin && disengagedUsersLoading) || 
+               (isAdmin && churnedUsersLoading);
     }, [
-        engagedAdoptedUsersLoading,
-        repeatVsNewLoading,
-        engagementHoursLoading,
-        resourceEngagementLoading,
-        disengagedUsersLoading,
+        engagedAdoptedUsersLoading, 
+        repeatVsNewLoading, 
+        resourceEngagementLoading, 
+        disengagedUsersLoading, 
         churnedUsersLoading,
         permissionsData
     ]);
@@ -205,19 +174,17 @@ export const useAnalyticsData = ({ communityIds, dateRange, apiUrl }: UseAnalyti
     // Combined error state - only consider queries that are actually enabled
     const hasErrors = useMemo(() => {
         const isAdmin = permissionsData === 'TelevedaAdmin';
-
-        return engagedAdoptedUsersError ||
-            repeatVsNewError ||
-            engagementHoursError ||
-            (isAdmin && resourceEngagementError) ||
-            (isAdmin && disengagedUsersError) ||
-            (isAdmin && churnedUsersError);
+        
+        return engagedAdoptedUsersError || 
+               repeatVsNewError || 
+               (isAdmin && resourceEngagementError) || 
+               (isAdmin && disengagedUsersError) || 
+               (isAdmin && churnedUsersError);
     }, [
-        engagedAdoptedUsersError,
-        repeatVsNewError,
-        engagementHoursError,
-        resourceEngagementError,
-        disengagedUsersError,
+        engagedAdoptedUsersError, 
+        repeatVsNewError, 
+        resourceEngagementError, 
+        disengagedUsersError, 
         churnedUsersError,
         permissionsData
     ]);
@@ -228,15 +195,13 @@ export const useAnalyticsData = ({ communityIds, dateRange, apiUrl }: UseAnalyti
         repeatVsNew: repeatVsNewData?.data || null,
         resourceEngagement: resourceEngagementData?.data || null,
         disengagedUsers: disengagedUsersData?.data || null,
-        churnedUsers: churnedUsersData?.data || null,
-        engagementHours: engagementHoursData?.data || null
+        churnedUsers: churnedUsersData?.data || null
     }), [
-        engagedAdoptedUsersData,
-        repeatVsNewData,
-        resourceEngagementData,
-        disengagedUsersData,
-        churnedUsersData,
-        engagementHoursData
+        engagedAdoptedUsersData, 
+        repeatVsNewData, 
+        resourceEngagementData, 
+        disengagedUsersData, 
+        churnedUsersData
     ]);
 
     // Calculate metrics for backward compatibility
@@ -248,7 +213,7 @@ export const useAnalyticsData = ({ communityIds, dateRange, apiUrl }: UseAnalyti
             activeUsers: parseInt(engagedAdoptedData.active_users) || 0,
             engagementPercentage: engagedAdoptedData.engagement_percentage || 0
         } : null;
-
+        
         const adoptedUsers = engagedAdoptedData ? {
             totalAccounts: parseInt(engagedAdoptedData.total_users) || 0,
             engagedAccounts: parseInt(engagedAdoptedData.adopted_users) || 0,
@@ -264,12 +229,12 @@ export const useAnalyticsData = ({ communityIds, dateRange, apiUrl }: UseAnalyti
             const repeatCount = parseInt(repeatItem?.count || '0');
             const newCount = parseInt(newItem?.count || '0');
             const total = parseInt(repeatVsNewRaw.total || '0');  // Use backend total
-
+            
             // Validate: If sum doesn't match total, log warning (for dev)
             if (repeatCount + newCount !== total) {
-                console.warn('Repeat vs New total mismatch:', { calculated: repeatCount + newCount, backend: total });
+                console.warn('Repeat vs New total mismatch:', {calculated: repeatCount + newCount, backend: total});
             }
-
+            
             repeatVsNew = {
                 repeatAttendees: repeatCount,
                 newAttendees: newCount,
@@ -282,77 +247,63 @@ export const useAnalyticsData = ({ communityIds, dateRange, apiUrl }: UseAnalyti
         // Process disengaged users data
         const disengagedRaw = disengagedUsersData?.data;
         let disengagedUsers = null;
-
-        if (disengagedRaw) {
-            disengagedUsers = {
-                totalDisengaged: disengagedRaw.total
+        if (disengagedRaw && disengagedRaw.breakdown && Array.isArray(disengagedRaw.breakdown)) {
+            const totalUsers = parseInt(disengagedRaw.total || '0');
+            const oneMonth = disengagedRaw.breakdown.find(item => item.disengagement_status === '1-3 months');
+            const threeMonths = disengagedRaw.breakdown.find(item => item.disengagement_status === '3-6 months');
+            const sixMonths = disengagedRaw.breakdown.find(item => item.disengagement_status === '6+ months');
+            
+            const oneMonthCount = parseInt(oneMonth?.count || '0');
+            const threeMonthsCount = parseInt(threeMonths?.count || '0');
+            const sixMonthsCount = parseInt(sixMonths?.count || '0');
+            const total = parseInt(disengagedRaw.total || '0');  // Use backend total
+            
+            // Validate: If sum doesn't match total, log warning
+            if (oneMonthCount + threeMonthsCount + sixMonthsCount !== total) {
+                console.warn('Disengaged total mismatch:', {calculated: oneMonthCount + threeMonthsCount + sixMonthsCount, backend: total});
             }
+            
+            disengagedUsers = {
+                disengaged1Month: oneMonthCount,
+                disengaged1MonthPercentage: totalUsers > 0 ? Math.round((oneMonthCount / totalUsers) * 100) : 0,
+                disengaged3Months: threeMonthsCount,
+                disengaged3MonthsPercentage: totalUsers > 0 ? Math.round((threeMonthsCount / totalUsers) * 100) : 0,
+                disengaged6Months: sixMonthsCount,
+                disengaged6MonthsPercentage: totalUsers > 0 ? Math.round((sixMonthsCount / totalUsers) * 100) : 0,
+                totalDisengaged: total
+            };
         }
-
-        // if (disengagedRaw && disengagedRaw.breakdown && Array.isArray(disengagedRaw.breakdown)) {
-        //     const totalUsers = parseInt(disengagedRaw.total || '0');
-        //     const oneMonth = disengagedRaw.breakdown.find(item => item.disengagement_status === '1-3 months');
-        //     const threeMonths = disengagedRaw.breakdown.find(item => item.disengagement_status === '3-6 months');
-        //     const sixMonths = disengagedRaw.breakdown.find(item => item.disengagement_status === '6+ months');
-
-        //     const oneMonthCount = parseInt(oneMonth?.count || '0');
-        //     const threeMonthsCount = parseInt(threeMonths?.count || '0');
-        //     const sixMonthsCount = parseInt(sixMonths?.count || '0');
-        //     const total = parseInt(disengagedRaw.total || '0');  // Use backend total
-
-        //     // Validate: If sum doesn't match total, log warning
-        //     if (oneMonthCount + threeMonthsCount + sixMonthsCount !== total) {
-        //         console.warn('Disengaged total mismatch:', {calculated: oneMonthCount + threeMonthsCount + sixMonthsCount, backend: total});
-        //     }
-
-        //     disengagedUsers = {
-        //         disengaged1Month: oneMonthCount,
-        //         disengaged1MonthPercentage: totalUsers > 0 ? Math.round((oneMonthCount / totalUsers) * 100) : 0,
-        //         disengaged3Months: threeMonthsCount,
-        //         disengaged3MonthsPercentage: totalUsers > 0 ? Math.round((threeMonthsCount / totalUsers) * 100) : 0,
-        //         disengaged6Months: sixMonthsCount,
-        //         disengaged6MonthsPercentage: totalUsers > 0 ? Math.round((sixMonthsCount / totalUsers) * 100) : 0,
-        //         totalDisengaged: total
-        //     };
-        // }
 
         // Process churned users data
         const churnedRaw = churnedUsersData?.data;
         let churnedUsers = null;
-
-        if (churnedRaw) {
+        if (churnedRaw && Array.isArray(churnedRaw)) {
+            const totalUsers = parseInt(engagedAdoptedData?.total_users || '0');
+            const neverLoggedIn = churnedRaw.find(item => item.churn_status === 'Never Logged In');
+            const oneMonth = churnedRaw.find(item => item.churn_status === '1-3 months');
+            const threeMonths = churnedRaw.find(item => item.churn_status === '3-6 months');
+            const sixMonths = churnedRaw.find(item => item.churn_status === '6-12 months');
+            
+            const neverLoggedInCount = parseInt(neverLoggedIn?.count || '0');
+            const oneMonthCount = parseInt(oneMonth?.count || '0');
+            const threeMonthsCount = parseInt(threeMonths?.count || '0');
+            const sixMonthsCount = parseInt(sixMonths?.count || '0');
+            const totalChurned = neverLoggedInCount + oneMonthCount + threeMonthsCount + sixMonthsCount;
+            
             churnedUsers = {
-                totalChurned: churnedRaw.count
-            }
+                neverLoggedIn: neverLoggedInCount,
+                neverLoggedInPercentage: totalUsers > 0 ? Math.round((neverLoggedInCount / totalUsers) * 100) : 0,
+                churned1Month: oneMonthCount,
+                churned1MonthPercentage: totalUsers > 0 ? Math.round((oneMonthCount / totalUsers) * 100) : 0,
+                churned3Months: threeMonthsCount,
+                churned3MonthsPercentage: totalUsers > 0 ? Math.round((threeMonthsCount / totalUsers) * 100) : 0,
+                churned6Months: sixMonthsCount,
+                churned6MonthsPercentage: totalUsers > 0 ? Math.round((sixMonthsCount / totalUsers) * 100) : 0,
+                totalChurned: totalChurned,
+                totalUsers: totalUsers,
+                churnRate: totalUsers > 0 ? Math.round((totalChurned / totalUsers) * 100 * 100) / 100 : 0
+            };
         }
-
-        // if (churnedRaw && Array.isArray(churnedRaw)) {
-        //     const totalUsers = parseInt(engagedAdoptedData?.total_users || '0');
-        //     const neverLoggedIn = churnedRaw.find(item => item.churn_status === 'Never Logged In');
-        //     const oneMonth = churnedRaw.find(item => item.churn_status === '1-3 months');
-        //     const threeMonths = churnedRaw.find(item => item.churn_status === '3-6 months');
-        //     const sixMonths = churnedRaw.find(item => item.churn_status === '6-12 months');
-
-        //     const neverLoggedInCount = parseInt(neverLoggedIn?.count || '0');
-        //     const oneMonthCount = parseInt(oneMonth?.count || '0');
-        //     const threeMonthsCount = parseInt(threeMonths?.count || '0');
-        //     const sixMonthsCount = parseInt(sixMonths?.count || '0');
-        //     const totalChurned = neverLoggedInCount + oneMonthCount + threeMonthsCount + sixMonthsCount;
-
-        //     churnedUsers = {
-        //         neverLoggedIn: neverLoggedInCount,
-        //         neverLoggedInPercentage: totalUsers > 0 ? Math.round((neverLoggedInCount / totalUsers) * 100) : 0,
-        //         churned1Month: oneMonthCount,
-        //         churned1MonthPercentage: totalUsers > 0 ? Math.round((oneMonthCount / totalUsers) * 100) : 0,
-        //         churned3Months: threeMonthsCount,
-        //         churned3MonthsPercentage: totalUsers > 0 ? Math.round((threeMonthsCount / totalUsers) * 100) : 0,
-        //         churned6Months: sixMonthsCount,
-        //         churned6MonthsPercentage: totalUsers > 0 ? Math.round((sixMonthsCount / totalUsers) * 100) : 0,
-        //         totalChurned: totalChurned,
-        //         totalUsers: totalUsers,
-        //         churnRate: totalUsers > 0 ? Math.round((totalChurned / totalUsers) * 100 * 100) / 100 : 0
-        //     };
-        // }
 
         return {
             engagedUsers,
@@ -370,31 +321,30 @@ export const useAnalyticsData = ({ communityIds, dateRange, apiUrl }: UseAnalyti
 
     // Process resource engagement data
     const resourceEngagementMetrics = useMemo(() => {
-        const resourceData = resourceEngagementData?.data?.data
-        const totalPageViews = resourceEngagementData?.data?.pageViews || 0;
-
+        const resourceData = resourceEngagementData?.data;
         if (!resourceData || !Array.isArray(resourceData)) return null;
-
+        
         let totalInteractions = 0;
+        let totalPageViews = 0;
         let totalUniqueUsers = 0;
-
+        
         resourceData.forEach(item => {
-            totalInteractions += parseInt(item.modal_views || '0') +
-                parseInt(item.downloads || '0') +
-                parseInt(item.opens || '0');
+            totalInteractions += parseInt(item.modal_views || '0') + 
+                               parseInt(item.downloads || '0') + 
+                               parseInt(item.opens || '0');
+            totalPageViews += parseInt(item.page_views || '0');
             totalUniqueUsers += parseInt(item.unique_users || '0');
         });
-
-        const engagementPercentage = totalPageViews > 0
-            ? Math.round((totalInteractions / totalPageViews) * 100 * 100) / 100
-            : 0;
-
+        
+        const totalUsers = parseInt(engagedAdoptedUsersData?.data?.total_users || '0');
+        const engagementPercentage = totalUsers > 0 ? Math.round((totalUniqueUsers / totalUsers) * 100 * 100) / 100 : 0;
+        
         return {
             totalInteractions,
             totalPageViews,
             engagementPercentage
         };
-    }, [resourceEngagementData]);
+    }, [resourceEngagementData, engagedAdoptedUsersData]);
 
     return {
         data: analyticsData,
@@ -402,18 +352,9 @@ export const useAnalyticsData = ({ communityIds, dateRange, apiUrl }: UseAnalyti
         resourceEngagementMetrics,
         isLoading,
         hasErrors,
-        loadingStates: {
-            engagedAdoptedUsers: engagedAdoptedUsersLoading,
-            repeatVsNew: repeatVsNewLoading,
-            engagementHours: engagementHoursLoading,
-            resourceEngagement: resourceEngagementLoading,
-            disengagedUsers: disengagedUsersLoading,
-            churnedUsers: churnedUsersLoading
-        },
         errors: {
             engagedAdoptedUsers: engagedAdoptedUsersError,
             repeatVsNew: repeatVsNewError,
-            engagementHours: engagementHoursError,
             resourceEngagement: resourceEngagementError,
             disengagedUsers: disengagedUsersError,
             churnedUsers: churnedUsersError

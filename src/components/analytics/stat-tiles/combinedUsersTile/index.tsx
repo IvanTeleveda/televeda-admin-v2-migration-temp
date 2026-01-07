@@ -40,14 +40,18 @@ export const CombinedUsersTile: React.FC<CombinedUsersTileProps> = ({
         );
     }
 
+    const adoptionTooltip = adoptedData?.averageDaysToFirstEngagement 
+        ? `Percentage of accounts that joined vs engaged with content. Average time to first engagement: ${adoptedData.averageDaysToFirstEngagement.toFixed(1)} days`
+        : 'Percentage of accounts that joined vs engaged with content (watched on-demand classes, attended live events, or engaged with community resources)';
+
     return (
         <Card hoverable className="stat-tile" title="Engaged & Adopted Users">
             <Row gutter={16}>
                 <Col span={12}>
-                    <Tooltip title="Users who logged in and engaged with content">
+                    <Tooltip title="Percentage of active users who have engaged with content (watched on-demand classes, attended live events, or engaged with community resources) in the last 30 days">
                         <Statistic
                             title="Engaged Users"
-                            value={engagedData ? engagedData.engagedUsers : '0'}
+                            value={engagedData ? `${engagedData.engagementPercentage.toFixed(2)}% (${engagedData.engagedUsers}/${engagedData.activeUsers})` : '0% (0/0)'}
                             valueStyle={{ color: '#52c41a', fontSize: '14px' }}
                             prefix={<TeamOutlined />}
                             loading={isLoading}
@@ -55,10 +59,10 @@ export const CombinedUsersTile: React.FC<CombinedUsersTileProps> = ({
                     </Tooltip>
                 </Col>
                 <Col span={12}>
-                    <Tooltip title={"Users who joined televeda and engaged with content"}>
+                    <Tooltip title={adoptionTooltip}>
                         <Statistic
                             title="Adopted Users"
-                            value={adoptedData ? adoptedData.engagedAccounts : '0'}
+                            value={adoptedData ? `${adoptedData.adoptionPercentage.toFixed(2)}% (${adoptedData.engagedAccounts}/${adoptedData.totalAccounts})` : '0% (0/0)'}
                             valueStyle={{ color: '#1890ff', fontSize: '14px' }}
                             prefix={<UserAddOutlined />}
                             loading={isLoading}

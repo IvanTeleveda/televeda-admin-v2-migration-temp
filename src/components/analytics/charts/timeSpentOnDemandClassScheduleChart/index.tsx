@@ -14,7 +14,7 @@ import { InfoCircleOutlined } from "@ant-design/icons";
 import { useCustom } from "@refinedev/core";
 import { AnalyticsGroupType } from "../../../../pages/analytics";
 
-export const PageTimeSpentChart: React.FC<{
+export const TimeSpentOnDemandClassScheduleChart: React.FC<{
   communityIds: string[];
   dateRange: [dayjs.Dayjs, dayjs.Dayjs],
   apiUrl: string;
@@ -22,9 +22,9 @@ export const PageTimeSpentChart: React.FC<{
   globalGroupBy?: AnalyticsGroupType;
   userEmail?: string;
 }> = ({ communityIds, dateRange, apiUrl, initialData, globalGroupBy = AnalyticsGroupType.DAY, userEmail = "" }) => {
+
   const groupByFilter = globalGroupBy;
   const appliedUserEmail = userEmail;
-
   const timezone = useMemo(() => moment.tz.guess(), []);
 
   const query = {
@@ -37,8 +37,8 @@ export const PageTimeSpentChart: React.FC<{
       ? { userEmail: appliedUserEmail }
       : {}),
   };
-
-  const url = `${apiUrl}/analytics/memberPageTimeMetrics`;
+  
+  const url = `${apiUrl}/analytics/memberOnDemandClassScheduleTimeMetrics`;
   const { data, isLoading: graphIsLoading } = useCustom<{
     data: any;
     total: any;
@@ -52,10 +52,8 @@ export const PageTimeSpentChart: React.FC<{
     queryOptions: { 
       ...(initialData ? { initialData } : {}),
       enabled: !!communityIds && !!dateRange?.[0]
-    }
+    },
   });
-
-  // Individual filters removed - now controlled by tab-level filters
 
   const config: LineConfig = useMemo(
     () => ({
@@ -116,6 +114,8 @@ export const PageTimeSpentChart: React.FC<{
     }),
     [data, graphIsLoading]
   );
+
+  // Individual filters removed - now controlled by tab-level filters
 
   return (
     <div

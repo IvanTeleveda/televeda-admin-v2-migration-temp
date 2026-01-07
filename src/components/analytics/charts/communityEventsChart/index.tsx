@@ -18,38 +18,27 @@ export const CommunityEventsCharts: React.FC<{
   communityIds: string | string[] | undefined | null | number | { value: string; label: string };
   dateRange: [Dayjs, Dayjs];
   apiUrl?: string;
+  initialData?: any;
+  hideZero?: boolean;
   showResourceInteractions?: boolean;
   showPageViews?: boolean;
-  groupBy?: AnalyticsGroupType;
-  enableFetching?: boolean;
-  isLoading?: boolean;
-  passedData?: {data: {
-    collectionItemsEvents: CollectionItemEvent[];
-    sponsorEventsPeriod: number;
-    sponsorEventsToDate: number;
-    pageVisits: CollectionItemEvent[];
-    pageVisitsPeriod: number;
-    pageVisitsToDate: number;
-  }}
 }> = ({
   sponsorData,
   communityIds,
   dateRange,
   apiUrl,
+  initialData,
+
   showResourceInteractions = true,
-  showPageViews = true,
-  groupBy = AnalyticsGroupType.DAY,
-  enableFetching = true,
-  isLoading: passedIsLoading,
-  passedData
+  showPageViews = true
 }) => {
 
-    const groupByFilter = groupBy;
-    const { mode } = useContext(ColorModeContext);
+  const groupByFilter = AnalyticsGroupType.DAY;
+  const { mode } = useContext(ColorModeContext);
 
-    const tz = useMemo(() => {
-      return moment.tz.guess()
-    }, []);
+  const tz = useMemo(() => {
+    return moment.tz.guess()
+  }, []);
     const query = {
       start: dateRange[0].toISOString(),
       end: dateRange[1].toISOString(),
@@ -59,7 +48,7 @@ export const CommunityEventsCharts: React.FC<{
     };
 
     const url = `${apiUrl}/analytics/collectionItemsEvents`;
-    const { data: queryData, isLoading: queryLoading, refetch: refetchData } = useCustom<{
+    const { data, isLoading: graphIsLoading, refetch: refetchData } = useCustom<{
       collectionItemsEvents: CollectionItemEvent[];
       sponsorEventsPeriod: number;
       sponsorEventsToDate: number;
@@ -70,23 +59,18 @@ export const CommunityEventsCharts: React.FC<{
       url,
       method: "get",
       config: {
-        query: { ...query, start: dateRange[0].startOf('day').toISOString(), end: dateRange[1].endOf('day').toISOString() }
+        query: {...query, start: dateRange[0].startOf('day').toISOString(), end: dateRange[1].endOf('day').toISOString()}
       },
-      queryOptions: { enabled: enableFetching /* refine black magic allows getting the data from the parent query */ }
+      queryOptions: initialData ? { initialData } : {}
     });
 
     useEffect(() => {
-      if(enableFetching) {
-        refetchData();
-      }
-    }, [refetchData, groupByFilter]);
+      refetchData();
+    }, [refetchData]);
 
     if (!sponsorData?.data) {
       return <></>;
     }
-
-    const isLoading = enableFetching ? queryLoading : (passedIsLoading ?? false);
-    const data = passedData || queryData;
 
     return (
       <div style={{
@@ -99,12 +83,20 @@ export const CommunityEventsCharts: React.FC<{
           justifyContent: 'space-between',
           alignItems: 'flex-start'
         }}>
+          {/*<Space direction="vertical" style={{ gap: '0' }}>*/}
+          {/*  <Text*/}
+          {/*    style={{ fontSize: 18 }}*/}
+          {/*    strong*/}
+          {/*  >*/}
+          {/*    Community Analytics*/}
+          {/*  </Text>*/}
+          {/*</Space>*/}
         </div>
-        {!isLoading && data?.data &&
-          (!data.data.collectionItemsEvents?.some(event => event.event_count > 0) &&
-            !data.data.pageVisits?.some(visit => visit.event_count > 0)) ? (
-          <div style={{
-            textAlign: 'center',
+        {!graphIsLoading && data?.data && 
+         (!data.data.collectionItemsEvents?.some(event => event.event_count > 0) && 
+          !data.data.pageVisits?.some(visit => visit.event_count > 0)) ? (
+          <div style={{ 
+            textAlign: 'center', 
             padding: '60px 20px',
             background: mode === 'dark' ? '#1f1f1f' : '#fafafa',
             borderRadius: '8px',
@@ -121,31 +113,30 @@ export const CommunityEventsCharts: React.FC<{
         ) : (
           <>
             {showResourceInteractions && (
-              <CollectionItemsEventColumn
-                isLoading={isLoading}
-                dateRange={dateRange}
-                events={data?.data.collectionItemsEvents}
-                periodEvents={data?.data.sponsorEventsPeriod}
-                toDateEvents={data?.data.sponsorEventsToDate}
-                isGroup={true}
-                eventDescription="Shows the total events triggered by the members for chosen period"
-                title={"Viewed or Downloaded Community Resource"}
-                showLegend
-                groupBy={groupByFilter}
+              <CollectionItemsEventColumn 
+                  isLoading={graphIsLoading} 
+                  dateRange={dateRange}
+                  events={data?.data.collectionItemsEvents} 
+                  periodEvents={data?.data.sponsorEventsPeriod} 
+                  toDateEvents={data?.data.sponsorEventsToDate}
+                  isGroup={true} 
+                  eventDescription="Shows the total events triggered by the members for chosen period"
+                  title={"Viewed or Downloaded Community Resource"} 
+                  showLegend
+                  onGroupByChange={() => {}} // No longer needed since controlled by tab
               />
             )}
             {showPageViews && (
-              <CollectionItemsEventColumn
-                isLoading={isLoading}
-                dateRange={dateRange}
-                events={data?.data.pageVisits}
-                periodEvents={data?.data.pageVisitsPeriod}
-                toDateEvents={data?.data.pageVisitsToDate}
-                isGroup={false}
-                title={"Viewed Community Page"}
-                eventDescription="Shows the total views of the Community screen by the members for chosen period"
-                hideTooltip
-                groupBy={groupByFilter}
+              <CollectionItemsEventColumn 
+                  isLoading={graphIsLoading} 
+                  dateRange={dateRange}
+                  events={data?.data.pageVisits} 
+                  periodEvents={data?.data.pageVisitsPeriod} 
+                  toDateEvents={data?.data.pageVisitsToDate}
+                  isGroup={false} 
+                  title={"Viewed Community Page"} 
+                  eventDescription="Shows the total views of the Community screen by the members for chosen period"
+                  hideTooltip
               />
             )}
           </>

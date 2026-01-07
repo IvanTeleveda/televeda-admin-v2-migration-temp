@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Empty, Typography, Tabs } from 'antd';
+import { Card, Empty, Space, Typography, Tooltip, Tabs } from 'antd';
 import { AnalyticsWidgetConfig, AnalyticsType, AnalyticsDisplayFormat, ReportFilters } from '../types';
 import { LineChartOutlined, TableOutlined, UserAddOutlined, BellOutlined, TeamOutlined, ScheduleOutlined, VideoCameraAddOutlined } from '@ant-design/icons';
 
@@ -9,6 +9,8 @@ import { AttendanceAnalyticsTable } from "../../../components/analytics/tables/a
 import { RetentionAnalyticsTable } from "../../../components/analytics/tables/retentionAnalyticsTable";
 import { EventsAnalyticsTable } from "../../../components/analytics/tables/eventsAnalyticsTable";
 import { PageTimeAnalyticsTable } from "../../../components/analytics/tables/pageTimeAnalyticsTable";
+import { OnDemandAnalyticsTable } from "../../../components/analytics/tables/onDemandAnalyticsTable";
+import { VTCTimeAnalyticsTable } from "../../../components/analytics/tables/VTCTimeAnalyticsTable";
 
 import { ReminderChart } from "../../../components/analytics/charts/remindersChart";
 import { NewRegistrationsChart } from "../../../components/analytics/charts/newRegistrationChart";
@@ -16,12 +18,12 @@ import { AttendanceChart } from "../../../components/analytics/charts/attendance
 import { RetentionChart } from "../../../components/analytics/charts/retentionChart";
 import { CommunityEventsCharts } from "../../../components/analytics/charts/communityEventsChart";
 import { PageTimeSpentChart } from "../../../components/analytics/charts/pageTimeSpentChart";
+import { TimeSpentOnDemandClassScheduleChart } from "../../../components/analytics/charts/timeSpentOnDemandClassScheduleChart";
+import { TimeSpentVTCChart } from "../../../components/analytics/charts/timeSpentVTCChart";
 import { useApiUrl, useCustom } from '@refinedev/core';
 import moment from 'moment';
 import dayjs from 'dayjs';
 import { ICommunitySponsors } from '../../../interfaces';
-import { StreamingChart } from '../../../components/analytics/charts/streamingChart';
-import { StreamingAnalyticsTable } from '../../../components/analytics/tables/streamingAnalyticsTable';
 
 
 const { Text, Title } = Typography;
@@ -40,7 +42,8 @@ export const analyticsTypeDetails: Record<AnalyticsType, { title: string; icon: 
     [AnalyticsType.RETENTION]: { title: "Retention", icon: <ScheduleOutlined /> },
     [AnalyticsType.EVENTS]: { title: "Community Events", icon: <VideoCameraAddOutlined /> },
     [AnalyticsType.PAGE_TIME]: { title: "Page Time", icon: <LineChartOutlined /> },
-    [AnalyticsType.STREAMING]: { title: "Streaming Time", icon: <LineChartOutlined /> },
+    [AnalyticsType.ON_DEMAND]: { title: "On-Demand Usage", icon: <LineChartOutlined /> },
+    [AnalyticsType.VTC]: { title: "VTC Usage", icon: <LineChartOutlined /> },
 };
 
 const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({
@@ -90,8 +93,10 @@ const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({
                 return <EventsAnalyticsTable communityIds={communityIds} dateRange={dateRangeForComponents} apiUrl={apiUrl} />;
             case AnalyticsType.PAGE_TIME:
                 return <PageTimeAnalyticsTable communityIds={communityIds} dateRange={dateRangeForComponents} apiUrl={apiUrl} />;
-            case AnalyticsType.STREAMING:
-                return <StreamingAnalyticsTable communityIds={communityIds} dateRange={dateRangeForComponents} apiUrl={apiUrl} />;
+            case AnalyticsType.ON_DEMAND:
+                return <OnDemandAnalyticsTable communityIds={communityIds} dateRange={dateRangeForComponents} apiUrl={apiUrl} />;
+            case AnalyticsType.VTC:
+                return <VTCTimeAnalyticsTable communityIds={communityIds} dateRange={[dayjs(dateRangeForComponents[0].toISOString()), dayjs(dateRangeForComponents[1].toISOString())]} apiUrl={apiUrl} />;
             default:
                 return <Text type="danger">Unknown analytics table type</Text>;
         }
@@ -120,8 +125,10 @@ const AnalyticsWidget: React.FC<AnalyticsWidgetProps> = ({
                 return <CommunityEventsCharts communityIds={communityIds} dateRange={dateRangeForCharts} apiUrl={apiUrl} sponsorData={sponsorData} />;
             case AnalyticsType.PAGE_TIME:
                 return <PageTimeSpentChart communityIds={communityIds} dateRange={dateRangeForCharts} apiUrl={apiUrl} />;
-            case AnalyticsType.STREAMING:
-                return <StreamingChart communityIds={communityIds} dateRange={dateRangeForCharts} apiUrl={apiUrl} />;
+            case AnalyticsType.ON_DEMAND:
+                return <TimeSpentOnDemandClassScheduleChart communityIds={communityIds} dateRange={dateRangeForCharts} apiUrl={apiUrl} />;
+            case AnalyticsType.VTC:
+                return <TimeSpentVTCChart communityIds={communityIds} dateRange={dateRangeForCharts} apiUrl={apiUrl} />;
             default:
                 return <Text type="danger">Unknown analytics chart type</Text>;
         }

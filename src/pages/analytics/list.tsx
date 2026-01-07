@@ -8,17 +8,15 @@ import {
 import { FilterButton } from "../../components/buttons/filter";
 import FilterFormWrapper from "../../components/filter";
 import dayjs from "dayjs";
-import UnifiedAnalytics from "./tabs/unifiedAnalytics";
 import ResourceAnalyticsTab from "./tabs/resourceAnalytics";
+import UnifiedAnalytics from "./tabs/unifiedAnalytics";
 import SponsorAnalyticsTab from "./tabs/sponsorAnalytics";
 import Constants from "../../typings/constants";
 import { SummaryContainer } from "./tabs/summaryResults";
 import { ICommunity, ICommunitySponsors, UserPermissions } from "../../interfaces";
-import { Button, Col, DatePicker, Form, notification, Row, Select, Spin, Tabs, Typography } from "@pankod/refine-antd";
+import { Col, DatePicker, Form, notification, Row, Select, Spin, Tabs, Typography } from "@pankod/refine-antd";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSelect } from "@refinedev/antd";
-import { useAnalyticsData } from "../../hooks/useAnalyticsData";
-import { ReloadOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
@@ -27,6 +25,16 @@ export enum AnalyticsGroupType {
     WEEK = 'week',
     MONTH = 'month',
     QUARTER = 'quarter'
+}
+
+interface SummaryResult {
+    attendance: number;
+    engagementMinutes: number;
+    events: number;
+    registrations: number;
+    totalTimeAcrossCommunities: number;
+    totalActiveMembers: number;
+    overallAveragePerMember: number;
 }
 
 const AnalyticsList: React.FC<IResourceComponentsProps> = () => {
@@ -46,26 +54,45 @@ const AnalyticsList: React.FC<IResourceComponentsProps> = () => {
     const dateRangeFilter = filters?.find((f: any) => f.field === "timestamp");
     const dateRange = dateRangeFilter?.value;
 
-    // Use analytics data hook at the list level to manage loading state
-    const {
-        data: analyticsData,
-        calculatedMetrics,
-        resourceEngagementMetrics,
-        hasErrors: hasErrorsRaw,
-        loadingStates,
-        errors
-    } = useAnalyticsData({
-        communityIds,
-        dateRange,
-        apiUrl
+    // Yeah fix this later
+    const [queryParams, setQueryParams] = useState<{
+        start: string;
+        end: string;
+        timezone: string;
+        communityIds?: string[];
+    } | null>(null);
+
+    const { data: summaryData, isLoading: summaryLoading, refetch: refetchSummary } = useCustom<SummaryResult>({
+        url: `${apiUrl}/analytics/summary`,
+        method: 'get',
+        config: { query: queryParams },
+        queryOptions: {
+            enabled: false,
+        },
     });
 
-    // Convert hasErrors to boolean
-    const hasErrors = !!hasErrorsRaw;
+    // Add a loading state that triggers immediately on filter changes
+    const [isFilterLoading, setIsFilterLoading] = useState(false);
+
+    // Manual refetch trigger to ensure loading states, because for some reason it's not working :)
+    useEffect(() => {
+        if (queryParams) {
+            setIsFilterLoading(true);
+            refetchSummary().finally(() => {
+                setIsFilterLoading(false);
+            });
+        }
+    }, [queryParams]);
+
+    // Combined loading state
+    const isLoading = summaryLoading || isFilterLoading;
 
     const searchFormProps = {
         form,
         onFinish: (values: any) => {
+            // Set loading state immediately when filters are applied
+            setIsFilterLoading(true);
+
             const newFilters: CrudFilters = [];
 
             if (values.communityIds && values.communityIds.length > 0) {
@@ -86,6 +113,13 @@ const AnalyticsList: React.FC<IResourceComponentsProps> = () => {
                     ]
                 });
             }
+
+            setQueryParams({
+                start: values.timestamp?.[0]?.startOf('day').toISOString(),
+                end: values.timestamp?.[1]?.endOf('day').toISOString(),
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                communityIds: values.communityIds,
+            });
 
             setFilters(newFilters);
             filterButtonRef.current?.hide();
@@ -138,37 +172,6 @@ const AnalyticsList: React.FC<IResourceComponentsProps> = () => {
         }
     }, [communityData, communitySelectProps.options, permissionsData]);
 
-    const handleViewTotalsToDate = () => {
-        const startDate = dayjs('2020-01-01').startOf('day');
-        const endDate = dayjs().endOf('day');
-
-        // Update form values
-        form.setFieldsValue({
-            timestamp: [startDate, endDate]
-        });
-
-        // Update filters
-        const newFilters: CrudFilters = [];
-        if (communityIds && communityIds.length > 0) {
-            newFilters.push({
-                field: "communityIds",
-                operator: "in",
-                value: communityIds
-            });
-        }
-        newFilters.push({
-            field: "timestamp",
-            operator: "between",
-            value: [startDate, endDate]
-        });
-        setFilters(newFilters);
-
-        notification.success({
-            message: 'Date Range Updated',
-            description: `Showing totals from ${startDate.format('MMMM DD, YYYY')} to today.`,
-        });
-    };
-
     // Handle "Select All" functionality
     const handleCommunityChange = (value: any) => {
         if (value.includes('all') && permissionsData === "TelevedaAdmin") {
@@ -195,6 +198,8 @@ const AnalyticsList: React.FC<IResourceComponentsProps> = () => {
 
     useEffect(() => {
         if (managedCommunityId && !hasInitialized.current) {
+            const initialStart = dayjs().subtract(7, "days").startOf('day').toISOString();
+            const initialEnd = dayjs().endOf('day').toISOString();
 
             const initialFilters: CrudFilters = [
                 {
@@ -217,6 +222,13 @@ const AnalyticsList: React.FC<IResourceComponentsProps> = () => {
                 timestamp: [dayjs().subtract(7, "days"), dayjs()]
             });
 
+            setQueryParams({
+                start: initialStart,
+                end: initialEnd,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                communityIds: [managedCommunityId],
+            });
+
             hasInitialized.current = true;
         }
     }, [managedCommunityId, form]);
@@ -231,6 +243,7 @@ const AnalyticsList: React.FC<IResourceComponentsProps> = () => {
                     communityIds={communityIds}
                     dateRange={dateRange}
                     apiUrl={apiUrl}
+                    sponsorData={sponsorData}
                 />
             )
         },
@@ -263,86 +276,75 @@ const AnalyticsList: React.FC<IResourceComponentsProps> = () => {
     return (
         <div>
             {/* Filter Section */}
-            <Row gutter={[16, 16]} justify="end" style={{ marginBottom: 16 }}>
-                <Col>
-                    <Button
-                        type="primary"
-                        icon={<ReloadOutlined />}
-                        onClick={handleViewTotalsToDate}
-                    >
-                        View Totals to Date
-                    </Button>
-                </Col>
-                <Col>
-                    <FilterButton ref={filterButtonRef} filters={filters}>
-                        <FilterFormWrapper
-                            ref={filterWrapperRef}
-                            filterButtonRef={filterButtonRef}
-                            formProps={searchFormProps}
-                            filters={filters || []}
-                            fieldValuesNameRef={["timestamp", "communityIds"]}
-                            filterValuesNameRef={["timestamp", "communityIds"]}
-                            formElement={
-                                <Row gutter={[16, 16]}>
-                                    <Col xl={24} lg={24} md={24} sm={24} xs={24}>
-                                        <Form.Item
-                                            label="Search by community"
-                                            name="communityIds"
-                                            extra="Select one or multiple communities"
-                                        >
-                                            <Select
-                                                {...communitySelectProps}
-                                                labelInValue={false}
-                                                optionLabelProp="label"
-                                                placeholder="Select a community"
-                                                style={{ width: "100%" }}
-                                                mode="multiple"
-                                                allowClear={true}
-                                                onSelect={handleCommunityChange}
-                                            />
-                                        </Form.Item>
-                                    </Col>
+            <Row justify="end" style={{ marginBottom: 16 }}>
+                <FilterButton ref={filterButtonRef} filters={filters}>
+                    <FilterFormWrapper
+                        ref={filterWrapperRef}
+                        filterButtonRef={filterButtonRef}
+                        formProps={searchFormProps}
+                        filters={filters || []}
+                        fieldValuesNameRef={["timestamp", "communityIds"]}
+                        filterValuesNameRef={["timestamp", "communityIds"]}
+                        formElement={
+                            <Row gutter={[16, 16]}>
+                                <Col xl={24} lg={24} md={24} sm={24} xs={24}>
+                                    <Form.Item
+                                        label="Search by community"
+                                        name="communityIds"
+                                        extra="Select one or multiple communities"
+                                    >
+                                        <Select
+                                            {...communitySelectProps}
+                                            labelInValue={false}
+                                            optionLabelProp="label"
+                                            placeholder="Select a community"
+                                            style={{ width: "100%" }}
+                                            mode="multiple"
+                                            allowClear={true}
+                                            onSelect={handleCommunityChange}
+                                        />
+                                    </Form.Item>
+                                </Col>
 
-                                    <Col xl={24} lg={24} md={24} sm={24} xs={24}>
-                                        <Form.Item label="Timestamp range" name="timestamp">
-                                            <RangePicker
-                                                style={{
-                                                    width: '100%',
-                                                    height: 35,
-                                                    background: 'rgba(255, 255, 255, 0.3)'
-                                                }}
-                                                size="small"
-                                                ranges={{
-                                                    "This Week": [
-                                                        dayjs().startOf("week"),
-                                                        dayjs().endOf("week"),
-                                                    ],
-                                                    "Last Month": [
-                                                        dayjs().startOf("month").subtract(1, "month"),
-                                                        dayjs().endOf("month").subtract(1, "month"),
-                                                    ],
-                                                    "This Month": [
-                                                        dayjs().startOf("month"),
-                                                        dayjs().endOf("month"),
-                                                    ],
-                                                    "This Year": [
-                                                        dayjs().startOf("year"),
-                                                        dayjs().endOf("year"),
-                                                    ],
-                                                }}
-                                                format="YYYY/MM/DD"
-                                                allowClear={false}
-                                            />
-                                        </Form.Item>
-                                    </Col>
+                                <Col xl={24} lg={24} md={24} sm={24} xs={24}>
+                                    <Form.Item label="Timestamp range" name="timestamp">
+                                        <RangePicker
+                                            style={{
+                                                width: '100%',
+                                                height: 35,
+                                                background: 'rgba(255, 255, 255, 0.3)'
+                                            }}
+                                            size="small"
+                                            ranges={{
+                                                "This Week": [
+                                                    dayjs().startOf("week"),
+                                                    dayjs().endOf("week"),
+                                                ],
+                                                "Last Month": [
+                                                    dayjs().startOf("month").subtract(1, "month"),
+                                                    dayjs().endOf("month").subtract(1, "month"),
+                                                ],
+                                                "This Month": [
+                                                    dayjs().startOf("month"),
+                                                    dayjs().endOf("month"),
+                                                ],
+                                                "This Year": [
+                                                    dayjs().startOf("year"),
+                                                    dayjs().endOf("year"),
+                                                ],
+                                            }}
+                                            format="YYYY/MM/DD"
+                                            allowClear={false}
+                                        />
+                                    </Form.Item>
+                                </Col>
 
 
-                                </Row>
-                            }
-                            syncWithLocation={true}
-                        />
-                    </FilterButton>
-                </Col>
+                            </Row>
+                        }
+                        syncWithLocation={true}
+                    />
+                </FilterButton>
             </Row>
 
             {/* Header Section */}
@@ -361,25 +363,24 @@ const AnalyticsList: React.FC<IResourceComponentsProps> = () => {
                 <Col span={24}>
                     <SummaryContainer
                         dateRange={dateRange}
+                        summaryData={summaryData?.data}
+                        isLoading={isLoading}
                         communityIds={communityIds}
                         apiUrl={apiUrl}
-                        analyticsData={analyticsData}
-                        calculatedMetrics={calculatedMetrics}
-                        resourceEngagementMetrics={resourceEngagementMetrics}
-                        loadingStates={loadingStates}
-                        hasErrors={hasErrors}
-                        errors={errors}
                     />
                 </Col>
             </Row>
 
             {/* Tabs Section */}
-            <Tabs
-                defaultActiveKey="unified"
-                items={tabItems}
-                size="large"
-                style={{ width: '100%' }}
-            />
+            <Spin spinning={isLoading} tip="Loading analytics data...">
+                <Tabs
+                    defaultActiveKey="unified"
+                    items={tabItems}
+                    size="large"
+                    style={{ width: '100%' }}
+                    tabBarExtraContent={isLoading ? <Spin size="small" /> : null}
+                />
+            </Spin>
         </div>
     );
 };

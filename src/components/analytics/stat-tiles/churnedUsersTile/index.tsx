@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Row, Col, Statistic, Tooltip } from '@pankod/refine-antd';
-import { UserOutlined } from '@ant-design/icons';
+import { FrownOutlined, MehOutlined, UserOutlined } from '@ant-design/icons';
 
 interface ChurnedUsersData {
     neverLoggedIn: number;
@@ -17,24 +17,28 @@ interface ChurnedUsersData {
 }
 
 interface ChurnedUsersTileProps {
+    communityIds?: any;
+    dateRange?: any;
+    apiUrl: string;
     data?: ChurnedUsersData | null;
     isLoading?: boolean;
     error?: any;
-    total?: number;
 }
 
 export const ChurnedUsersTile: React.FC<ChurnedUsersTileProps> = ({
+    communityIds,
+    dateRange,
+    apiUrl,
     data: churnedUsersData,
     isLoading,
-    error,
-    total
+    error
 }) => {
 
     if (error) {
         return (
             <Card hoverable className="stat-tile">
                 <Row gutter={16}>
-                    <Col span={24}>
+                    <Col span={8}>
                         <Statistic
                             title="Churned Users"
                             value="Error"
@@ -46,34 +50,11 @@ export const ChurnedUsersTile: React.FC<ChurnedUsersTileProps> = ({
         );
     }
 
-    // Use total prop if provided, otherwise fall back to data.totalChurned
-    const displayTotal = total ?? churnedUsersData?.totalChurned ?? 0;
-
     return (
-        <Tooltip title="Users who were active before the specified date range but have since not logged in">
-            <Card hoverable className="stat-tile" title="Churned Users">
-                <Row gutter={16}>
-                    <Col span={24}>
-                        <Statistic
-                            title="Total"
-                            value={displayTotal}
-                            valueStyle={{ fontSize: '24px' }}
-                            prefix={<UserOutlined />}
-                            loading={isLoading}
-                        />
-                    </Col>
-                </Row>
-            </Card>
-        </Tooltip>
-    );
-
-    // Previous logic - commented out
-    /*
-    return (
-        <Tooltip title="Total number of users who have not logged back into the site in the specified time period">
+        <Tooltip title="Total number of users who have not logged back into the site in the specified time periods">
             <Card hoverable className="stat-tile" title="Churned Users">
                 <Row gutter={24}>
-                    <Col span={6}>
+                    {/* <Col span={6}>
                         <Statistic
                             title="Never Logged In"
                             value={churnedUsersData?.neverLoggedIn || 0}    
@@ -82,7 +63,7 @@ export const ChurnedUsersTile: React.FC<ChurnedUsersTileProps> = ({
                             prefix={<UserOutlined />}
                             loading={isLoading}
                         />
-                    </Col>
+                    </Col> */}
                     <Col span={8}>
                         <Statistic
                             title="1-3 months"
@@ -117,5 +98,4 @@ export const ChurnedUsersTile: React.FC<ChurnedUsersTileProps> = ({
             </Card>
         </Tooltip>
     );
-    */
 };

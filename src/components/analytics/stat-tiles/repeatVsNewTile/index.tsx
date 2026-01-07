@@ -57,9 +57,8 @@ export const RepeatVsNewTile: React.FC<RepeatVsNewTileProps> = ({
                     <Tooltip title="Number of users who have attended multiple events during this period">
                         <Statistic
                             title="Repeat Attendees"
-                            value={repeatVsNewData?.repeatAttendees || 0}
-                            // value={repeatVsNewData?.repeatPercentage?.toFixed(2) + '%'}
-                            // suffix={`(${repeatVsNewData?.repeatAttendees || 0} / ${repeatVsNewData?.totalAttendees || 0})`}
+                            value={repeatVsNewData?.repeatPercentage?.toFixed(2) + '%'}
+                            suffix={`(${repeatVsNewData?.repeatAttendees || 0} / ${repeatVsNewData?.totalAttendees || 0})`}
                             valueStyle={{ color: '#52c41a', fontSize: '14px' }}
                             loading={isLoading}
                         />
@@ -69,9 +68,8 @@ export const RepeatVsNewTile: React.FC<RepeatVsNewTileProps> = ({
                     <Tooltip title="Number of users attending their first event during this period">
                         <Statistic
                             title="New Attendees"
-                            value={repeatVsNewData?.newAttendees || 0}
-                            // value={repeatVsNewData?.newPercentage?.toFixed(2) + '%'}
-                            // suffix={`(${repeatVsNewData?.newAttendees || 0} / ${repeatVsNewData?.totalAttendees || 0})`}
+                            value={repeatVsNewData?.newPercentage?.toFixed(2) + '%'}
+                            suffix={`(${repeatVsNewData?.newAttendees || 0} / ${repeatVsNewData?.totalAttendees || 0})`}
                             valueStyle={{ color: '#1890ff', fontSize: '14px' }}
                             loading={isLoading}
                         />

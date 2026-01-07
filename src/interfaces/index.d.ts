@@ -448,55 +448,6 @@ export interface ISurvey {
   }[];
 }
 
-interface SubmissionData {
-    resultData: {
-        senderCommunityId: string;
-        CommunityId: string;
-        json: Record<string, any>;
-        caretakerSubmission: boolean;
-        sendBy: {
-            id: string;
-            firstName: string;
-            lastName: string;
-            email: string;
-        };
-        onBehalfOf: {
-            id: string;
-            firstName: string;
-            lastName: string;
-            email: string;
-        };
-        recipientCommunityId: string;
-        timestamp: number;
-    }[]
-    metadata: {
-        questions: string[];
-        timestamp: number;
-        refId: string;
-    }[],
-    totalVersions: number;
-}
-
-interface ISubmissionDataFilterVariables {
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    recipientCommunityId?: string[];
-    timestamp?: any[];
-    surveySearch?: any
-}
-
-interface SubmissionVerionProps {
-    version: number,
-    setTotalTabs: React.Dispatch<React.SetStateAction<number>>
-}
-
-interface SurveySubmissionsTableProps {
-    surveyId: string;
-    startDate?: string;
-    endDate?: string;
-}
-
 export interface EmailHistory {
   id: string;
   associationId: string;

@@ -1,32 +1,21 @@
-import React, { useContext, useMemo } from "react";
-import { Table, Typography, Space, Tooltip } from "antd";
+import React, { useContext, useMemo, useState } from "react";
+import { Table, Typography, Space, Tooltip, Form, Input, Button } from "antd";
 import { useCustom } from "@refinedev/core";
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import moment from "moment";
 import { ColorModeContext } from "../../../../contexts/color-mode";
-import { AnalyticsGroupType } from "../../../../pages/analytics";
-import {
-    PageTimeData,
-    PageTimeTableRow,
-    PageTimeTableData,
-    ColumnTotals, AnalyticsTableProps
-} from "../../analytics-types";
-import {formatTime} from "../../util";
+import { AnalyticsTableProps, TimeSpentData, PageTimeData } from "../../analytics-types";
 
 const { Text } = Typography;
 
-export const PageTimeAnalyticsTable: React.FC<AnalyticsTableProps & {
-    globalGroupBy?: AnalyticsGroupType;
-    userEmail?: string;
-}> = ({
-    communityIds,
-    dateRange,
-    apiUrl,
-    globalGroupBy = AnalyticsGroupType.DAY,
-    userEmail = ""
-}) => {
+export const CombinedTimeAnalyticsTable: React.FC<AnalyticsTableProps> = ({
+                                                                          communityIds,
+                                                                          dateRange,
+                                                                          apiUrl
+                                                                      }) => {
+    const [form] = Form.useForm();
     const { mode } = useContext(ColorModeContext);
-
+    const [userEmail, setUserEmail] = useState<string>("");
     const timezone = useMemo(() => moment.tz.guess(), []);
 
     const query = useMemo(() => ({
@@ -34,21 +23,55 @@ export const PageTimeAnalyticsTable: React.FC<AnalyticsTableProps & {
         end: dateRange[1].endOf('day').toISOString(),
         timezone,
         communityIds,
-        groupBy: globalGroupBy,
         ...(userEmail ? { userEmail } : {}),
-    }), [communityIds, dateRange, timezone, globalGroupBy, userEmail]);
+    }), [communityIds, dateRange, timezone, userEmail]);
 
-    const url = `${apiUrl}/analytics/memberPageTimeMetrics`;
-    const { data, isLoading } = useCustom<{
+    // Fetch page time data
+    const pageTimeUrl = `${apiUrl}/analytics/memberPageTimeMetrics`;
+    const { data: pageTimeData, isLoading: pageLoading } = useCustom<{
         data: PageTimeData[];
     }>({
-        url,
+        url: pageTimeUrl,
         method: "get",
         config: { query }
     });
 
-    const tableData = useMemo((): PageTimeTableData => {
-        if (!data?.data?.data) return { tableRows: [], allPages: [] };
+    // Fetch on-demand streaming data
+    const onDemandUrl = `${apiUrl}/analytics/memberOnDemandClassScheduleTimeMetrics`;
+    const { data: onDemandData, isLoading: onDemandLoading } = useCustom<{
+        data: TimeSpentData[];
+    }>({
+        url: onDemandUrl,
+        method: "get",
+        config: { query }
+    });
+
+    const isLoading = pageLoading || onDemandLoading;
+
+    const formatTime = (seconds: number): string => {
+        if (!seconds) return "0s";
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.round(seconds % 60);
+        return `${minutes > 0 ? `${minutes}m ` : ''}${remainingSeconds}s`;
+    };
+
+    // Combine both datasets
+    const combinedData = useMemo(() => {
+        const allData: (PageTimeData | TimeSpentData)[] = [];
+
+        if (pageTimeData?.data?.data) {
+            allData.push(...pageTimeData.data.data);
+        }
+
+        if (onDemandData?.data?.data) {
+            allData.push(...onDemandData.data.data);
+        }
+
+        return allData;
+    }, [pageTimeData, onDemandData]);
+
+    const tableData = useMemo(() => {
+        if (!combinedData.length) return { tableRows: [], allPages: [] };
 
         const groupedByDate: Record<string, {
             date: string;
@@ -56,7 +79,7 @@ export const PageTimeAnalyticsTable: React.FC<AnalyticsTableProps & {
             total: number;
         }> = {};
 
-        data.data.data.forEach((item: PageTimeData) => {
+        combinedData.forEach((item) => {
             if (!item.event_date) return;
 
             const date = item.event_date;
@@ -67,25 +90,18 @@ export const PageTimeAnalyticsTable: React.FC<AnalyticsTableProps & {
                     total: 0
                 };
             }
-            // will combine the on-demand and on-demand-streaming pages for now.
-            let pageName = item.page;
-            if (item.page === 'on-demand-streaming') {
-                pageName = 'on-demand';
-            }
 
-            groupedByDate[date].pageData[pageName] =
-                (groupedByDate[date].pageData[pageName] || 0) + item.total_time_spent;
+            // Add page time data
+            groupedByDate[date].pageData[item.page] =
+                (groupedByDate[date].pageData[item.page] || 0) + item.total_time_spent;
             groupedByDate[date].total += item.total_time_spent;
         });
 
-        //
         const allPages = Array.from(
-            new Set(data.data.data.map((item: PageTimeData) =>
-                item.page === 'on-demand-streaming' ? 'on-demand' : item.page
-            ))
+            new Set(combinedData.map(item => item.page))
         );
 
-        const tableRows: PageTimeTableRow[] = Object.values(groupedByDate).map(item => ({
+        const tableRows = Object.values(groupedByDate).map(item => ({
             key: item.date,
             date: moment(item.date).format("MMM DD, YYYY"),
             rawDate: item.date,
@@ -94,12 +110,12 @@ export const PageTimeAnalyticsTable: React.FC<AnalyticsTableProps & {
         }));
 
         return { tableRows, allPages };
-    }, [data]);
+    }, [combinedData]);
 
-    const columnTotals = useMemo((): ColumnTotals => {
-        const totals: ColumnTotals = { total: 0 };
+    const columnTotals = useMemo(() => {
+        const totals: Record<string, number> = { total: 0 };
 
-        tableData.tableRows.forEach((row: PageTimeTableRow) => {
+        tableData.tableRows.forEach((row) => {
             Object.entries(row.pageData).forEach(([page, time]) => {
                 if (!totals[page]) totals[page] = 0;
                 totals[page] += time;
@@ -110,11 +126,19 @@ export const PageTimeAnalyticsTable: React.FC<AnalyticsTableProps & {
         return totals;
     }, [tableData]);
 
-    const getPageTime = (row: PageTimeTableRow, page: string): number => {
+    const getPageTime = (row: any, page: string): number => {
         return row.pageData[page] || 0;
     };
 
+    const applyFilter = (): void => {
+        const email = form.getFieldValue("email")?.trim() || "";
+        setUserEmail(email);
+    };
 
+    const resetFilter = (): void => {
+        form.resetFields(["email"]);
+        setUserEmail("");
+    };
 
     const columns = useMemo(() => {
         const baseColumns: any[] = [
@@ -122,7 +146,7 @@ export const PageTimeAnalyticsTable: React.FC<AnalyticsTableProps & {
                 title: "Date",
                 dataIndex: "date",
                 key: "date",
-                sorter: (a: PageTimeTableRow, b: PageTimeTableRow) =>
+                sorter: (a: any, b: any) =>
                     new Date(a.rawDate).getTime() - new Date(b.rawDate).getTime(),
             }
         ];
@@ -132,7 +156,7 @@ export const PageTimeAnalyticsTable: React.FC<AnalyticsTableProps & {
                 title: page,
                 dataIndex: page,
                 key: page,
-                render: (_: any, record: PageTimeTableRow) => formatTime(getPageTime(record, page)),
+                render: (_: any, record: any) => formatTime(getPageTime(record, page)),
                 align: 'center' as const,
             });
         });
@@ -159,9 +183,9 @@ export const PageTimeAnalyticsTable: React.FC<AnalyticsTableProps & {
             }}>
                 <Space direction="vertical" size={0}>
                     <Text strong style={{ fontSize: 18 }}>
-                        Page Time Analytics
+                        Combined Time Analytics
                         <Tooltip
-                            title="Shows time spent by users on different pages of the platform, excluding time spent streaming live, external events, or on‑demand classes."
+                            title="Shows time spent by users on different pages including class schedules and on-demand streaming"
                             placement="bottom"
                         >
                             <InfoCircleOutlined
@@ -180,7 +204,32 @@ export const PageTimeAnalyticsTable: React.FC<AnalyticsTableProps & {
                     )}
                 </Space>
 
-                {/* Individual filters removed - now controlled by tab-level filters */}
+                <Form
+                    form={form}
+                    layout="inline"
+                    style={{ marginTop: 8 }}
+                >
+                    <Form.Item name="email" label="Filter by Email">
+                        <Input
+                            placeholder="Enter user email"
+                            prefix={<SearchOutlined />}
+                            allowClear
+                            onPressEnter={applyFilter}
+                        />
+                    </Form.Item>
+                    <Form.Item>
+                        <Button
+                            type="primary"
+                            onClick={applyFilter}
+                            style={{ marginRight: 8 }}
+                        >
+                            Apply
+                        </Button>
+                        <Button onClick={resetFilter}>
+                            Reset
+                        </Button>
+                    </Form.Item>
+                </Form>
             </div>
 
             <Table

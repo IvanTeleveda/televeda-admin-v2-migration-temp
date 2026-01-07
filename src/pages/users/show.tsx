@@ -10,7 +10,6 @@ import { ColumnsType } from 'antd/es/table';
 import { List, Tooltip } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import moment from 'moment';
-import { SurveySubmissionsTable } from '../../components/surveys/SurveySubmissionsTable';
 
 interface ReferralDataForm {
     invitedFriends: number | string;
@@ -807,18 +806,6 @@ export const UserShow: React.FC<IResourceComponentsProps> = () => {
                                 </Form>
                             </Space>
                         </div>
-
-                        <Space direction="vertical" style={{ gap: '0', marginTop: 24 }}>
-                            <Typography.Text style={{ fontSize: 18 }} strong>
-                                Survey Submissions
-                            </Typography.Text>
-                        </Space>
-                        <SurveySubmissionsTable 
-                            surveyId="bc6fc9fd-aadf-4592-a974-6dadad6f0ec1"
-                            startDate={dateRange[0].toISOString()}
-                            endDate={dateRange[1].toISOString()}
-                        />
-
                         <Space direction="vertical" style={{ gap: '0' }}>
                             <Typography.Text
                                 style={{ fontSize: 18 }}

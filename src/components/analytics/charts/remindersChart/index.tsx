@@ -1,8 +1,14 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { Bar, BarConfig, Mix, MixConfig, G2 } from "@ant-design/plots";
 import {
-    Space, Tooltip,
-    Typography, Divider,
+    Form,
+    Select,
+    Space,
+    Switch,
+    Tooltip,
+    Typography,
+    Card,
+    Divider,
     Spin
 } from "@pankod/refine-antd";
 import { InfoCircleOutlined } from "@ant-design/icons";
@@ -10,7 +16,6 @@ import { Dayjs } from "dayjs";
 import * as moment from 'moment-timezone';
 import { useCustom } from "@refinedev/core";
 import { AnalyticsGroupType } from "../../../../pages/analytics";
-import { getDateFormat } from "../../util";
 
 const { Text, Title } = Typography;
 
@@ -26,29 +31,23 @@ interface ReminderChartProps {
     communityIds: string | string[] | undefined | null | number | { value: string; label: string };
     dateRange: [Dayjs, Dayjs];
     apiUrl: string;
+    initialData?: any;
     globalGroupBy?: AnalyticsGroupType;
     memberAggregate?: boolean;
     hideZero?: boolean;
-    enableFetching?: boolean;
-    isLoading?: boolean;
-    passedData?: any;
 }
 
 export const ReminderChart: React.FC<ReminderChartProps> = ({
-    communityIds,
-    dateRange,
-    apiUrl,
-    globalGroupBy = AnalyticsGroupType.DAY,
-    memberAggregate = false,
-    hideZero = false,
-    enableFetching = true,
-    isLoading: passedIsLoading,
-    passedData
-}) => {
+                                                                communityIds,
+                                                                dateRange,
+                                                                apiUrl,
+                                                                initialData,
+                                                                globalGroupBy = AnalyticsGroupType.DAY,
+                                                                memberAggregate = false,
+                                                                hideZero = false
+                                                            }) => {
 
-    const hideZeroValues = hideZero;
     const groupByFilter = globalGroupBy;
-
     const [transformedAreaData, setTransformedAreaData] = useState<ReminderAnalyticsQuery[]>([]);
 
     const timezone = useMemo(() => moment.tz.guess(), []);
@@ -62,7 +61,7 @@ export const ReminderChart: React.FC<ReminderChartProps> = ({
         communityIds
     }), [dateRange, timezone, groupByFilter, memberAggregate, communityIds]);
 
-    const { data: queryData, isLoading: queryIsLoading } = useCustom<{
+    const { data, isLoading } = useCustom<{
         data: any;
         total: any;
         trend: number;
@@ -70,39 +69,34 @@ export const ReminderChart: React.FC<ReminderChartProps> = ({
         url: `${apiUrl}/analytics/reminders`,
         method: "get",
         config: { query },
-        queryOptions: { enabled: enableFetching /* refine black magic allows getting the data from the parent query */ }
+        queryOptions: initialData ? { initialData } : {}
     });
 
-    // Use passed loading state when fetching is disabled, otherwise use query loading state
-    const isLoading = enableFetching ? queryIsLoading : (passedIsLoading ?? false);
-    const data = passedData || queryData;
+    const graphData = data?.data?.data;
 
-    const graphData = useMemo(() => {
-        if(!data?.data?.data) {
-            return {
-                columns: [],
-                pie: []
-            }
-        }
+    // Individual filters removed - now controlled by tab-level filters
 
-        let configData: any = JSON.parse(JSON.stringify(data.data.data));
-        
-        if(hideZeroValues) {
-            configData.columns = configData.columns?.filter((row: any) => row.value !== null);
-            configData.pie = configData.pie?.filter((row: any) => row.value !== null);
+    // Date formatting utility
+    const getDateFormat = useCallback((value: string) => {
+        const date = moment(value);
+        switch(groupByFilter) {
+            case AnalyticsGroupType.DAY:
+                return date.format('MMM Do');
+            case AnalyticsGroupType.WEEK:
+                return `${date.format('MMM Do')} - ${date.add(6, 'days').format('Do')}\n(${date.format('wo')} week)`;
+            case AnalyticsGroupType.MONTH:
+                return date.format('YYYY, MMMM');
+            case AnalyticsGroupType.QUARTER:
+                return `${date.format('YYYY, Qo')} quarter`;
+            default:
+                return date.format('MMM Do');
         }
-
-        return {
-            columns: configData.columns,
-            pie: configData.pie
-        }
-    }, [data, hideZeroValues]);
+    }, [groupByFilter]);
 
     // Transform data for area chart
     useEffect(() => {
         if (!isLoading && graphData?.columns) {
-            let data: ReminderAnalyticsQuery[] = graphData.columns;
-
+            const data: ReminderAnalyticsQuery[] = graphData.columns;
 
             const transformedMap = data.reduce((acc, entry) => {
                 const key = `${entry.start_date}-${entry.title}`;
@@ -130,7 +124,7 @@ export const ReminderChart: React.FC<ReminderChartProps> = ({
 
             setTransformedAreaData(Object.values(transformedMap));
         }
-    }, [graphData?.columns, isLoading, hideZeroValues]);
+    }, [graphData?.columns, isLoading]);
 
     // Register custom interaction for G2
     useEffect(() => {
@@ -185,12 +179,12 @@ export const ReminderChart: React.FC<ReminderChartProps> = ({
         seriesField: "group_key",
         yAxis: {
             label: {
-                formatter: (value) => getDateFormat(value, groupByFilter),
+                formatter: getDateFormat,
             },
             line: null,
         },
         tooltip: {
-            title: (value) => getDateFormat(value, groupByFilter, true),
+            title: getDateFormat,
             formatter: (data: any) => ({
                 name: data.group_key || "count",
                 value: data.value || 0,
@@ -220,7 +214,7 @@ export const ReminderChart: React.FC<ReminderChartProps> = ({
                 '#1E9493', '#FF99C3'
             ]
         }
-    }), [graphData?.pie, isLoading, getDateFormat]);
+    }), [graphData?.columns, isLoading, getDateFormat]);
 
     const mixConfig: MixConfig = useMemo(() => ({
         tooltip: false,
@@ -280,7 +274,7 @@ export const ReminderChart: React.FC<ReminderChartProps> = ({
                     maxColumnWidth: 80,
                     xAxis: {
                         label: {
-                            formatter: (value) => getDateFormat(value, groupByFilter),
+                            formatter: getDateFormat,
                             style: {
                                 fontSize: 11,
                             },
@@ -333,7 +327,7 @@ export const ReminderChart: React.FC<ReminderChartProps> = ({
                             return `
                                 <div style="background: white; padding: 12px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
                                     <div style="font-weight: 600; margin-bottom: 8px; color: #262626;">
-                                        ${getDateFormat(title, groupByFilter, true)}
+                                        ${getDateFormat(title)}
                                     </div>
                                     <ul style="margin: 0; padding: 0;">
                                         ${list.join('')}
@@ -347,11 +341,20 @@ export const ReminderChart: React.FC<ReminderChartProps> = ({
         ],
     }), [graphData, isLoading, transformedAreaData, getDateFormat]);
 
+    const groupByOptions = [
+        { value: AnalyticsGroupType.DAY, label: 'Day' },
+        { value: AnalyticsGroupType.WEEK, label: 'Week' },
+        { value: AnalyticsGroupType.MONTH, label: 'Month' },
+        { value: AnalyticsGroupType.QUARTER, label: 'Quarter' }
+    ];
+
     return (
         <div
             className="reminder-analytics-card"
             style={{
                 width: '100%',
+                // boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+                // borderRadius: '8px'
                 padding: 8
             }}
         >
@@ -384,6 +387,8 @@ export const ReminderChart: React.FC<ReminderChartProps> = ({
                             Cumulative number of reminders by selected period per {memberAggregate ? 'member' : 'type'}
                         </Text>
                     </Space>
+
+                    {/* Individual filters removed - now controlled by tab-level filters */}
                 </div>
             </div>
 

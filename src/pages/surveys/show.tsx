@@ -9,8 +9,49 @@ import { TelevedaShow } from "../../components/page-containers/show";
 import { HttpError } from "@pankod/refine-core";
 import { FilterButton } from "../../components/buttons/filter";
 import FilterFormWrapper from "../../components/filter";
-import { ICommunity, ISubmissionDataFilterVariables, SubmissionData, SubmissionVerionProps } from "../../interfaces";
+import { ICommunity } from "../../interfaces";
 import Constants from "../../typings/constants";
+
+interface SubmissionData {
+    resultData: {
+        senderCommunityId: string;
+        CommunityId: string;
+        json: Object;
+        caretakerSubmission: boolean;
+        sendBy: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            email: string;
+        };
+        onBehalfOf: {
+            id: string;
+            firstName: string;
+            lastName: string;
+            email: string;
+        };
+        recipientCommunityId: string;
+        timestamp: number;
+    }[]
+    metadata: {
+        questions: Array<string>;
+        timestamp: number;
+        refId: string;
+    }[],
+    totalVersions: number;
+}
+interface ISubmissionDataFilterVariables {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    recipientCommunityId?: string[];
+    timestamp?: any[];
+    surveySearch?: any
+}
+interface SubmissionVerionProps {
+    version: number,
+    setTotalTabs: React.Dispatch<React.SetStateAction<number>>
+}
 
 export const SurveySubmissions: React.FC<IResourceComponentsProps> = () => {
 

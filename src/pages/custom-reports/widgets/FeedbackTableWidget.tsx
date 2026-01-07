@@ -271,9 +271,8 @@ const FeedbackTableWidget: React.FC<FeedbackTableWidgetProps> = ({ widgetConfig,
 
         const constructTabPane = (
             tabKey: string,
-            rawDataForCategory: WidgetFeedbackData[],
             label: string,
-            rawLabel?: string,
+            rawDataForCategory: WidgetFeedbackData[]
         ) => {
             if (!rawDataForCategory || rawDataForCategory.length === 0) return null;
 
@@ -299,37 +298,32 @@ const FeedbackTableWidget: React.FC<FeedbackTableWidgetProps> = ({ widgetConfig,
                 columns: displayColumns,
                 children: (
                     <Space direction="vertical" style={{ width: '100%' }}>
-                        <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <Space>
-                                <Typography.Text>{rawLabel || label}</Typography.Text>
-                            </Space>
-                            <Space>
-                                {hasActiveFilters && (
-                                    <Button size="middle" onClick={() => handleClearColumnFiltersForTab(tabKey)}>
-                                        Clear Tab Filters ({Object.keys(activeColFiltersForThisTab).length})
-                                    </Button>
-                                )}
-                                <Badge count={Object.keys(activeColFiltersForThisTab).length}>
-                                    <Button
-                                        icon={<FilterOutlined />}
-                                        size="middle"
-                                        onClick={() => openColumnFilterModal(tabKey, displayColumns)}
-                                        type="primary"
-                                    >
-                                        Filter
-                                    </Button>
-                                </Badge>
-                                <Tooltip title="Export all feedback data as Excel (.xlsx)">
-                                    <Button
-                                        icon={<DownloadOutlined />}
-                                        size="middle"
-                                        href={exportUrl}
-                                        target="_blank"
-                                    >
-                                        Export
-                                    </Button>
-                                </Tooltip>
-                            </Space>
+                        <Space style={{ width: '100%', justifyContent: 'flex-end', marginBottom: '8px' }}>
+                            {hasActiveFilters && (
+                                <Button size="middle" onClick={() => handleClearColumnFiltersForTab(tabKey)}>
+                                    Clear Tab Filters ({Object.keys(activeColFiltersForThisTab).length})
+                                </Button>
+                            )}
+                            <Badge count={Object.keys(activeColFiltersForThisTab).length}>
+                                <Button
+                                    icon={<FilterOutlined />}
+                                    size="middle"
+                                    onClick={() => openColumnFilterModal(tabKey, displayColumns)}
+                                    type="primary"
+                                >
+                                    Filter
+                                </Button>
+                            </Badge>
+                            <Tooltip title="Export all feedback data as Excel (.xlsx)">
+                                <Button
+                                    icon={<DownloadOutlined />}
+                                    size="middle"
+                                    href={exportUrl}
+                                    target="_blank"
+                                >
+                                    Export
+                                </Button>
+                            </Tooltip>
                         </Space>
                         <Table
                             dataSource={filteredRawData}
@@ -348,13 +342,13 @@ const FeedbackTableWidget: React.FC<FeedbackTableWidgetProps> = ({ widgetConfig,
         // SQL - Participant Default
         if (metadata.sql.hasDefaultEntries) {
             const categoryData = sqlDataArray.filter(item => item.feedbackType === 'default' && !item.isFromHost);
-            const tabPane = constructTabPane('sql_participant_default', categoryData, 'Standard (Participant)');
+            const tabPane = constructTabPane('sql_participant_default', 'Standard (Participant)', categoryData);
             if (tabPane) itemsOutput.push(tabPane);
         }
         // SQL - Host Default
         if (metadata.sql.hasHostEntries) {
             const categoryData = sqlDataArray.filter(item => item.feedbackType === 'default' && item.isFromHost);
-            const tabPane = constructTabPane('sql_host_default', categoryData, 'Standard (Host)',);
+            const tabPane = constructTabPane('sql_host_default', 'Standard (Host)', categoryData);
             if (tabPane) itemsOutput.push(tabPane);
         }
         // SQL - Surveys
@@ -362,19 +356,18 @@ const FeedbackTableWidget: React.FC<FeedbackTableWidgetProps> = ({ widgetConfig,
             const categoryData = sqlDataArray.filter(item => item.feedbackType === 'survey' && item.surveyId === surveyId);
             if (categoryData.length > 0) {
                 const surveyJsonSchema = categoryData[0]?.surveyJSON;
-                const surveyVersion = categoryData[0]?.version;
                 let surveyFullTitle = surveyId;
                 let surveyShortTitle = surveyId.substring(0, 12) + (surveyId.length > 12 ? '...' : '');
 
                 if (surveyJsonSchema) {
                     try {
                         const surveyModel = new Model(surveyJsonSchema);
-                        surveyFullTitle = surveyModel.title + (surveyVersion && surveyVersion > 1 ? ` (ver. ${surveyVersion})` : '') || surveyId;
+                        surveyFullTitle = surveyModel.title || surveyId;
                         surveyShortTitle = surveyFullTitle.length > 12 ? surveyFullTitle.substring(0, 12) + '...' : surveyFullTitle;
                     } catch (e) { }
                 }
                 const tabKey = `sql_survey_${surveyId}_${index}`;
-                const tabPane = constructTabPane(tabKey, categoryData, `Survey: ${surveyShortTitle}`, surveyFullTitle);
+                const tabPane = constructTabPane(tabKey, `Survey: ${surveyShortTitle}`, categoryData);
                 if (tabPane) {
                     itemsOutput.push({
                         ...tabPane,
@@ -387,13 +380,13 @@ const FeedbackTableWidget: React.FC<FeedbackTableWidgetProps> = ({ widgetConfig,
         // VTC - Participant
         if (metadata.noSql.hasDefaultEntries) {
             const categoryData = vtcDataArray.filter(item => !item.isFromHost);
-            const tabPane = constructTabPane('vtc_participant', categoryData, 'VTC (Participant)');
+            const tabPane = constructTabPane('vtc_participant', 'VTC (Participant)', categoryData);
             if (tabPane) itemsOutput.push(tabPane);
         }
         // VTC - Host
         if (metadata.noSql.hasHostEntries) {
             const categoryData = vtcDataArray.filter(item => item.isFromHost);
-            const tabPane = constructTabPane('vtc_host', categoryData, 'VTC (Host)');
+            const tabPane = constructTabPane('vtc_host', 'VTC (Host)', categoryData);
             if (tabPane) itemsOutput.push(tabPane);
         }
 

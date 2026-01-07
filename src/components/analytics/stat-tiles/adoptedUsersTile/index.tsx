@@ -45,12 +45,12 @@ export const AdoptedUsersTile: React.FC<AdoptedUsersTileProps> = ({
         );
     }
 
-    // const tooltipTitle = adoptedUsersData?.averageDaysToFirstEngagement 
-    //     ? `Percentage of accounts that joined vs engaged with content. Average time to first engagement: ${adoptedUsersData.averageDaysToFirstEngagement.toFixed(1)} days`
-    //     : 'Percentage of accounts that joined vs engaged with content (watched on-demand classes, attended live events, or engaged with community resources)';
+    const tooltipTitle = adoptedUsersData?.averageDaysToFirstEngagement 
+        ? `Percentage of accounts that joined vs engaged with content. Average time to first engagement: ${adoptedUsersData.averageDaysToFirstEngagement.toFixed(1)} days`
+        : 'Percentage of accounts that joined vs engaged with content (watched on-demand classes, attended live events, or engaged with community resources)';
 
     return (
-        <Tooltip title={"Users who joined televeda and engaged with content"}>
+        <Tooltip title={tooltipTitle}>
             <Card hoverable className="stat-tile" title="Adopted Users">
                 <Row gutter={24}>
                     <Col span={24}> 

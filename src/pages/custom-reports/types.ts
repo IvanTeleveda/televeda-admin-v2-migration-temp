@@ -69,7 +69,8 @@ export enum AnalyticsType {
   RETENTION = 'retention',
   EVENTS = 'events',
   PAGE_TIME = 'pageTime',
-  STREAMING = 'streaming'
+  ON_DEMAND = 'onDemand',
+  VTC = 'vtc',
 }
 
 export enum AnalyticsDisplayFormat {
@@ -104,8 +105,6 @@ export interface WidgetFeedbackData {
   userName: string;
   userEmail: string;
   surveyId?: string;
-  originalSurveyId?: string;
-  version?: number;
   surveyJSON?: any;
   data: Record<string, any>;
 }

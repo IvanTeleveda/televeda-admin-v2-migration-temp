@@ -39,7 +39,7 @@ export const EngagedUsersTile: React.FC<EngagedUsersTileProps> = ({
     }
 
     return (
-        <Tooltip title="Users who logged in and engaged with content">
+        <Tooltip title="Percentage of active users who have engaged with content (watched on-demand classes, attended live events, or engaged with community resources) in the last 30 days">
             <Card hoverable className="stat-tile" title="Engaged Users">
                 <Row gutter={24}>
                     <Col span={24}>

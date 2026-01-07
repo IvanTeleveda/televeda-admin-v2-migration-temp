@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { Typography, Space, Col, Button, Empty } from "antd";
+import { Typography, Space, Col, Button, Row, Empty } from "antd";
 import dayjs from "dayjs";
 import * as moment from "moment-timezone";
 import {
@@ -14,7 +14,7 @@ import { InfoCircleOutlined } from "@ant-design/icons";
 import { useCustom } from "@refinedev/core";
 import { AnalyticsGroupType } from "../../../../pages/analytics";
 
-export const PageTimeSpentChart: React.FC<{
+export const TimeSpentVTCChart: React.FC<{
   communityIds: string[];
   dateRange: [dayjs.Dayjs, dayjs.Dayjs],
   apiUrl: string;
@@ -22,9 +22,9 @@ export const PageTimeSpentChart: React.FC<{
   globalGroupBy?: AnalyticsGroupType;
   userEmail?: string;
 }> = ({ communityIds, dateRange, apiUrl, initialData, globalGroupBy = AnalyticsGroupType.DAY, userEmail = "" }) => {
+
   const groupByFilter = globalGroupBy;
   const appliedUserEmail = userEmail;
-
   const timezone = useMemo(() => moment.tz.guess(), []);
 
   const query = {
@@ -37,8 +37,8 @@ export const PageTimeSpentChart: React.FC<{
       ? { userEmail: appliedUserEmail }
       : {}),
   };
-
-  const url = `${apiUrl}/analytics/memberPageTimeMetrics`;
+  
+  const url = `${apiUrl}/analytics/memberVTCTimeMetrics`;
   const { data, isLoading: graphIsLoading } = useCustom<{
     data: any;
     total: any;
@@ -49,13 +49,8 @@ export const PageTimeSpentChart: React.FC<{
     config: {
       query,
     },
-    queryOptions: { 
-      ...(initialData ? { initialData } : {}),
-      enabled: !!communityIds && !!dateRange?.[0]
-    }
+    queryOptions: initialData ? { initialData } : {},
   });
-
-  // Individual filters removed - now controlled by tab-level filters
 
   const config: LineConfig = useMemo(
     () => ({
@@ -85,27 +80,6 @@ export const PageTimeSpentChart: React.FC<{
           },
         },
       },
-      tooltip: {
-        formatter: (datum: any) => {
-          const minutes = parseFloat(datum.total_time_spent);
-          let formattedValue;
-          
-          if (minutes < 1) {
-            formattedValue = `${(minutes * 60).toFixed(2)}s`;
-          } else if (minutes < 60) {
-            formattedValue = `${minutes.toFixed(2)}m`;
-          } else {
-            const hours = Math.floor(minutes / 60);
-            const remainingMins = minutes % 60;
-            formattedValue = `${hours}h ${remainingMins.toFixed(2)}m`;
-          }
-          
-          return {
-            name: datum.page,
-            value: formattedValue,
-          };
-        },
-      },
       scrollbar: {
         categorySize: 10,
         style: {
@@ -116,6 +90,8 @@ export const PageTimeSpentChart: React.FC<{
     }),
     [data, graphIsLoading]
   );
+
+  // Individual filters removed - now controlled by tab-level filters
 
   return (
     <div

@@ -2,7 +2,16 @@ import React from 'react';
 import { Card, Row, Col, Statistic, Tooltip } from '@pankod/refine-antd';
 import { VideoCameraAddOutlined, EyeOutlined } from '@ant-design/icons';
 
+interface ResourceEngagementData {
+    totalInteractions: number;
+    totalPageViews: number;
+    engagementPercentage: number;
+}
+
 interface ResourceEngagementTileProps {
+    communityIds?: any;
+    dateRange?: any;
+    apiUrl: string;
     data?: {
         totalInteractions: number;
         totalPageViews: number;
@@ -13,6 +22,9 @@ interface ResourceEngagementTileProps {
 }
 
 export const ResourceEngagementTile: React.FC<ResourceEngagementTileProps> = ({
+    communityIds,
+    dateRange,
+    apiUrl,
     data: resourceEngagementData,
     isLoading,
     error
