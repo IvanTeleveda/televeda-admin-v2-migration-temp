@@ -106,7 +106,7 @@ export const CommunityList: React.FC<IResourceComponentsProps> = () => {
             {permissionsData != "TelevedaAdmin" && viewTypeIsLoading ? <></> :
                 !viewType?.data.singleView ?
                     <TelevedaList
-                        title="Community Info"
+                        title="Community Information"
                         listProps={{
                             headerProps: {
                                 extra:
