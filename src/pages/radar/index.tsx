@@ -21,6 +21,7 @@ import { ICommunity } from '../../interfaces';
 import Constants from '../../typings/constants';
 import { useRef } from 'react';
 import { ColorModeContext } from '../../contexts/color-mode';
+import { SurveySubmissionsTable } from '../../components/surveys/SurveySubmissionsTable';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -520,6 +521,12 @@ const RadarDashboard: React.FC = () => {
                         </Card>
                     </Col>
                 </Row>
+
+                <SurveySubmissionsTable 
+                    surveyId="bc6fc9fd-aadf-4592-a974-6dadad6f0ec1"
+                    startDate={dateRange[0].toISOString()}
+                    endDate={dateRange[1].toISOString()}
+                />
 
                 {/* VTC Retention Trend Chart */}
                 <Card title="VTC Retention Trend" style={{ marginBottom: '24px' }}>

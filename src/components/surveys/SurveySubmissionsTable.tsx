@@ -9,7 +9,8 @@ import { SurveySubmissionsTableProps, SubmissionData } from "../../interfaces";
 export const SurveySubmissionsTable: React.FC<SurveySubmissionsTableProps> = ({ 
     surveyId,
     startDate,
-    endDate 
+    endDate,
+    email = null
 }) => {
     const [tableState, setTableState] = useState<{
         dataSource: Array<Object>;
@@ -33,6 +34,12 @@ export const SurveySubmissionsTable: React.FC<SurveySubmissionsTableProps> = ({
             } as LogicalFilter);
         }
         
+        filters.push({
+            field: "email",
+            operator: "eq",
+            value: email
+        });
+
         return filters;
     }, [startDate, endDate]);
 

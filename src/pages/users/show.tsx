@@ -817,6 +817,7 @@ export const UserShow: React.FC<IResourceComponentsProps> = () => {
                             surveyId="bc6fc9fd-aadf-4592-a974-6dadad6f0ec1"
                             startDate={dateRange[0].toISOString()}
                             endDate={dateRange[1].toISOString()}
+                            email={selectedUserRecord?.email}
                         />
 
                         <Space direction="vertical" style={{ gap: '0' }}>

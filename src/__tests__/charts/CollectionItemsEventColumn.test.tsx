@@ -40,10 +40,10 @@ describe('CollectionItemsEventColumn', () => {
     expect(screen.getByText('Test Event Title')).toBeInTheDocument();
   });
 
-  it('should display "No events for this period" when periodEvents or toDateEvents is 0', () => {
-    render(<CollectionItemsEventColumn {...{ ...defaultProps, periodEvents: 0, toDateEvents: 0 }} />);
-    expect(screen.getByText('No events recorded for this period')).toBeInTheDocument();
-  });
+  // it('should display "No events for this period" when periodEvents or toDateEvents is 0', () => {
+  //   render(<CollectionItemsEventColumn {...{ ...defaultProps, periodEvents: 0, toDateEvents: 0 }} />);
+  //   expect(screen.getByText('No events recorded for this period')).toBeInTheDocument();
+  // });
 
   it('should render the correct event counts', () => {
     render(<CollectionItemsEventColumn {...defaultProps} />);

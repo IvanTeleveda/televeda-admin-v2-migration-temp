@@ -495,6 +495,7 @@ interface SurveySubmissionsTableProps {
     surveyId: string;
     startDate?: string;
     endDate?: string;
+    email?: string;
 }
 
 export interface EmailHistory {

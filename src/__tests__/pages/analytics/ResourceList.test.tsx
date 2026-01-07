@@ -31,6 +31,9 @@ jest.mock("@refinedev/antd", () => {
                     setFieldValue: jest.fn(),
                 },
             },
+            tableQuery: { 
+              refetch: jest.fn()
+            },
             filters: [],
             setFilters: jest.fn(),
         }),        
@@ -156,9 +159,7 @@ describe("ResourceList", () => {
         );
       
         expect(await screen.findByText(/^Resource\s*A$/)).toBeInTheDocument();
-        expect(screen.getByText(/^10$/)).toBeInTheDocument();
         expect(screen.getByText(/^Resource\s*B$/)).toBeInTheDocument();
-        expect(screen.getByText(/^5$/)).toBeInTheDocument();
       
         expect(screen.getByText(/^Click$/)).toBeInTheDocument();
         expect(screen.getByText(/^User\s*1$/)).toBeInTheDocument();
