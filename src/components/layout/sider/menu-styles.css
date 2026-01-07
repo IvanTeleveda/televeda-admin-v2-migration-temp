@@ -1,0 +1,19 @@
+.popup-sub-menu-tvd {
+    background-color: #532D7F;
+}
+
+.ant-menu-submenu {
+    background-color: #532D7F !important;
+}
+
+.ant-menu-submenu-popup.popup-sub-menu {
+    background: #532D7F !important;
+}
+
+.ant-menu.ant-menu-sub.ant-menu-vertical {
+    background-color: #532D7F !important;
+}
+
+.ant-layout-sider-trigger {
+    background: #3A1C71 !important;
+}

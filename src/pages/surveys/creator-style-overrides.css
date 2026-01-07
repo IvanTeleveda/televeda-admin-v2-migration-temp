@@ -1,0 +1,15 @@
+#svd-save {
+    display: none;
+}
+
+.svc-full-container {
+    --primary: #6C20C4;
+}
+
+.svc-dragged-element-shortcut {
+    --primary: #6C20C4;
+}
+
+.bottom-border > td {
+    border-bottom: 1px solid black !important;
+}

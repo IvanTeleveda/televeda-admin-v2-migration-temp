@@ -1,0 +1,115 @@
+/* Stat Tile Header Styles */
+.stat-tile .ant-statistic-title {
+    font-size: 16px !important;
+    font-weight: 500;
+}
+
+/* Override any existing title styles */
+.ant-statistic-title {
+    font-size: 16px !important;
+}
+
+/* Secondary title styles for sub-categories */
+.stat-tile .ant-statistic-title.secondary-title {
+    font-size: 12px !important;
+    font-weight: 400;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+/* Dark mode styles - using Ant Design's actual theme classes */
+.ant-theme-dark .stat-tile .ant-statistic-title,
+[data-theme="dark"] .stat-tile .ant-statistic-title {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.ant-theme-dark .stat-tile .ant-statistic-content,
+[data-theme="dark"] .stat-tile .ant-statistic-content {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.ant-theme-dark .stat-tile .ant-statistic-title.secondary-title,
+[data-theme="dark"] .stat-tile .ant-statistic-title.secondary-title {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* Light mode styles */
+.ant-theme-light .stat-tile .ant-statistic-title,
+[data-theme="light"] .stat-tile .ant-statistic-title {
+    color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.ant-theme-light .stat-tile .ant-statistic-content,
+[data-theme="light"] .stat-tile .ant-statistic-content {
+    color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.ant-theme-light .stat-tile .ant-statistic-title.secondary-title,
+[data-theme="light"] .stat-tile .ant-statistic-title.secondary-title {
+    color: rgba(0, 0, 0, 0.65) !important;
+}
+
+/* Card height and width consistency */
+.stat-tile {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+}
+
+.stat-tile .ant-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+}
+
+.stat-tile .ant-row {
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ensure all stat tiles have consistent spacing */
+.stat-tile .ant-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.stat-tile .ant-statistic {
+    width: 100%;
+    text-align: center;
+}
+
+/* Additional theme support for Ant Design's algorithm-based theming */
+.ant-card.stat-tile {
+    transition: all 0.3s ease;
+}
+
+/* Ensure icons maintain their color in both themes */
+.stat-tile .anticon {
+    transition: color 0.3s ease;
+}
+
+/* Force text colors to adapt to theme */
+.ant-theme-dark .stat-tile .ant-statistic-title,
+.ant-theme-dark .stat-tile .ant-statistic-content-value,
+.ant-theme-dark .stat-tile .ant-statistic-content-suffix {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.ant-theme-light .stat-tile .ant-statistic-title,
+.ant-theme-light .stat-tile .ant-statistic-content-value,
+.ant-theme-light .stat-tile .ant-statistic-content-suffix {
+    color: rgba(0, 0, 0, 0.85) !important;
+}
+
+/* Ensure all cards have the same dimensions */
+.ant-col .stat-tile {
+    aspect-ratio: 1;
+    min-height: 200px;
+    max-height: 250px;
+}

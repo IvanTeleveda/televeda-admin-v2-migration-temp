@@ -1,0 +1,46 @@
+.react-grid-item {
+    background-color: #ffffff;
+    transition: transform 0.1s ease-in-out;
+}
+
+.react-grid-item.react-grid-placeholder {
+    background-color: #a1d9ff !important;
+    /* Ant Design primary-2 or similar light blue */
+    opacity: 0.4;
+    border-radius: 4px;
+    border: 1px dashed #1890ff;
+    /* Ant Design primary color */
+}
+
+/* Wrapper for each widget inside the grid item, useful for padding or other styles */
+.grid-widget-wrapper .ant-card-head {
+    min-height: 38px;
+    /* Adjust if title makes card header too big */
+    padding: 0 12px;
+}
+
+.grid-widget-wrapper .ant-card-body {
+    padding: 12px;
+    /* Default AntD card padding might be too much for small widgets */
+}
+
+/* Custom scrollbars if needed, Ant Design might already handle this well */
+/* For Webkit browsers */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
